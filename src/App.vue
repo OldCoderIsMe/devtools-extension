@@ -82,7 +82,7 @@
   </template>
   
   <script setup lang="ts">
-  import { computed, ref, onMounted, onUnmounted } from 'vue';
+  import { computed, ref, onMounted, onUnmounted, markRaw } from 'vue';
   import UrlTool from './tools/UrlTool.vue';
   import Md5Tool from './tools/Md5Tool.vue';
   import TimestampTool from './tools/TimestampTool.vue';
@@ -101,15 +101,15 @@
   }
   
   const tools = ref<ToolMeta[]>([
-    { id: 'url', name: 'URL 编码 / 解码', emoji: '🔗', component: UrlTool },
-    { id: 'md5', name: '加密/哈希工具', emoji: '🔐', component: Md5Tool },
-    { id: 'time', name: '时间戳转换', emoji: '⏰', component: TimestampTool },
-    { id: 'json', name: 'JSON 格式化', emoji: '📄', component: JsonTool },
-    { id: 'text', name: '文本处理', emoji: '📝', component: TextTool },
-    { id: 'uuid', name: 'UUID/随机字符串', emoji: '🆔', component: UuidTool },
-    { id: 'regex', name: '正则表达式', emoji: '🔍', component: RegexTool },
-    { id: 'qrcode', name: '二维码生成', emoji: '📱', component: QrcodeTool },
-    { id: 'diff', name: '文本差异对比', emoji: '🔄', component: DiffTool },
+    { id: 'url', name: 'URL 编码 / 解码', emoji: '🔗', component: markRaw(UrlTool) },
+    { id: 'md5', name: '加密/哈希工具', emoji: '🔐', component: markRaw(Md5Tool) },
+    { id: 'time', name: '时间戳转换', emoji: '⏰', component: markRaw(TimestampTool) },
+    { id: 'json', name: 'JSON 格式化', emoji: '📄', component: markRaw(JsonTool) },
+    { id: 'text', name: '文本处理', emoji: '📝', component: markRaw(TextTool) },
+    { id: 'uuid', name: 'UUID/随机字符串', emoji: '🆔', component: markRaw(UuidTool) },
+    { id: 'regex', name: '正则表达式', emoji: '🔍', component: markRaw(RegexTool) },
+    { id: 'qrcode', name: '二维码生成', emoji: '📱', component: markRaw(QrcodeTool) },
+    { id: 'diff', name: '文本差异对比', emoji: '🔄', component: markRaw(DiffTool) },
   ]);
   
   const activeToolId = ref<string>(tools.value[0].id);
