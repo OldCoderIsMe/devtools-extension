@@ -31,6 +31,7 @@ const iconSizes = {
   'icon16.png': 16,
   'icon48.png': 48,
   'icon128.png': 128,
+  'favicon.png': 32, // 添加 favicon（32x32 是标准尺寸）
 };
 
 // 检查 brand-icon.png 是否存在
@@ -66,7 +67,7 @@ async function generateIcons() {
           .png()
           .toFile(destPath);
       }
-      console.log('✓ Generated icon16.png, icon48.png, icon128.png from brand-icon.png');
+      console.log('✓ Generated icon16.png, icon48.png, icon128.png, favicon.png from brand-icon.png');
       return true;
     } catch (error) {
       console.error('✗ Error generating icons:', error.message);
@@ -80,7 +81,7 @@ async function generateIcons() {
       const destPath = path.join(destIconsDir, filename);
       fs.copyFileSync(brandIconPath, destPath);
     }
-    console.log('✓ Copied brand-icon.png as icon16.png, icon48.png, icon128.png');
+    console.log('✓ Copied brand-icon.png as icon16.png, icon48.png, icon128.png, favicon.png');
     return true;
   }
 }
