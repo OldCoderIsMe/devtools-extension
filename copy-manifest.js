@@ -160,10 +160,33 @@ async function processIcons() {
   }
 
   // 复制 favicon 到根目录（浏览器默认查找 favicon.ico 或 favicon.png）
-  if (fs.existsSync(path.join(destIconsDir, 'icon16.png'))) {
-    const faviconDest = path.join(destDir, 'favicon.png');
+  // 使用 brand-icon.png 生成 32x32 的 favicon
+  const faviconDest = path.join(destDir, 'favicon.png');
+  const brandIconPath = path.join(sourceIconsDir, 'brand-icon.png');
+  
+  if (fs.existsSync(brandIconPath) && hasSharp) {
+    try {
+      // 使用 sharp 生成 32x32 的 favicon
+      await sharp(brandIconPath)
+        .resize(32, 32, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png()
+        .toFile(faviconDest);
+      console.log('✓ Generated favicon.png (32x32) from brand-icon.png to dist root');
+    } catch (error) {
+      console.warn('⚠ Error generating favicon, falling back to icon16.png:', error.message);
+      // 回退到使用 icon16.png
+      if (fs.existsSync(path.join(destIconsDir, 'icon16.png'))) {
+        fs.copyFileSync(path.join(destIconsDir, 'icon16.png'), faviconDest);
+        console.log('✓ Copied favicon.png from icon16.png to dist root');
+      }
+    }
+  } else if (fs.existsSync(path.join(destIconsDir, 'icon16.png'))) {
+    // 如果没有 sharp 或 brand-icon.png，使用 icon16.png
     fs.copyFileSync(path.join(destIconsDir, 'icon16.png'), faviconDest);
-    console.log('✓ Copied favicon.png to dist root');
+    console.log('✓ Copied favicon.png from icon16.png to dist root');
   }
 
   // 写入更新后的 manifest.json
