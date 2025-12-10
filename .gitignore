@@ -9,3 +9,8 @@ devtools-suite-*.zip
 release
 *.dmg
 *.app
+
+# Large icon files (use Git LFS or remove from repo)
+# icons/icon.icns
+# electron/DevTools.iconset/
+# electron/DevTools.iconset.fixed/
