@@ -159,6 +159,13 @@ async function processIcons() {
     console.log('✓ Added icon configuration to manifest.json');
   }
 
+  // 复制 favicon 到根目录（浏览器默认查找 favicon.ico 或 favicon.png）
+  if (fs.existsSync(path.join(destIconsDir, 'icon16.png'))) {
+    const faviconDest = path.join(destDir, 'favicon.png');
+    fs.copyFileSync(path.join(destIconsDir, 'icon16.png'), faviconDest);
+    console.log('✓ Copied favicon.png to dist root');
+  }
+
   // 写入更新后的 manifest.json
   fs.writeFileSync(destFile, JSON.stringify(manifestContent, null, 2));
   console.log('✓ manifest.json copied to dist/');
