@@ -9,7 +9,9 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
-  base: (process.env.ELECTRON === '1' || process.env.ELECTRON === 'true') ? './' : '/',
+  base: (process.env.ELECTRON === '1' || process.env.ELECTRON === 'true') 
+    ? './' 
+    : (process.env.BASE_PATH || '/'),
   build: {
     outDir: 'dist',
     rollupOptions: {
