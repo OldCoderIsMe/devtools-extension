@@ -2,6 +2,12 @@
 
 一个功能丰富的开发工具集合，支持三种使用方式：Chrome 浏览器扩展、纯浏览器网页应用、macOS 桌面应用。所有计算都在本地完成，不会上传任何数据，保护您的隐私安全。
 
+## 🌐 在线体验
+
+**立即体验**：[https://oldcoderisme.github.io/devtools-extension/](https://oldcoderisme.github.io/devtools-extension/)
+
+无需安装，直接在浏览器中使用所有功能。
+
 ## 📦 三种使用方式
 
 ### 🌐 Chrome 浏览器扩展
@@ -83,167 +89,53 @@
 - **打包工具**：electron-builder
 - **构建工具**：Vite
 
-## 安装步骤
+## 快速开始
 
-### 1. 安装依赖
+### 方式一：在线使用（推荐）
 
-```bash
-cd devtools-extension
-npm install
-```
+直接访问 [在线体验地址](https://oldcoderisme.github.io/devtools-extension/)，无需安装即可使用所有功能。
 
-**注意**：如果之前已经安装过依赖，但遇到构建问题，请先删除 `node_modules` 和 `package-lock.json`，然后重新安装：
+### 方式二：Chrome 浏览器扩展
 
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
-### 2. 构建项目
-
-```bash
-npm run build
-```
-
-构建完成后，会在项目根目录生成 `dist` 文件夹。
-
-### 3. 选择使用方式
-
-#### 方式 A：Chrome 浏览器扩展
-
-**加载到 Chrome 浏览器**
-
-##### 方法一：开发者模式加载（推荐）
-
-1. **打开 Chrome 扩展管理页面**
-   - 在 Chrome 浏览器地址栏输入：`chrome://extensions/`
-   - 或者点击右上角三个点菜单 → 更多工具 → 扩展程序
-
-2. **启用开发者模式**
-   - 在扩展管理页面右上角，打开"开发者模式"开关
-
-3. **加载扩展**
-   - 点击"加载已解压的扩展程序"按钮
-   - 选择项目中的 `dist` 文件夹（**注意：不是整个项目文件夹，而是 dist 文件夹**）
-   - 点击"选择文件夹"
-
-4. **完成**
-   - 扩展加载成功后，会在扩展列表中显示
-   - 点击扩展图标即可使用
-
-**⚠️ 常见问题：如果遇到"清单文件缺失或不可读取"错误**
-
-如果加载扩展时提示"清单文件缺失或不可读取"，请按以下步骤操作：
-
-1. **确保已安装最新依赖**
+1. **安装依赖并构建**
    ```bash
    npm install
-   ```
-
-2. **重新构建项目**
-   ```bash
    npm run build
    ```
 
-3. **检查 dist 文件夹**
-   - 确认 `dist` 文件夹中存在 `manifest.json` 文件
-   - 如果不存在，说明构建配置有问题，请检查 `vite.config.ts` 配置
+2. **加载扩展**
+   - 打开 Chrome 浏览器，访问 `chrome://extensions/`
+   - 启用"开发者模式"
+   - 点击"加载已解压的扩展程序"，选择 `dist` 文件夹
 
-4. **重新加载扩展**
-   - 在 Chrome 扩展管理页面，删除之前加载失败的扩展
-   - 重新点击"加载已解压的扩展程序"，选择 `dist` 文件夹
+### 方式三：macOS 桌面应用
 
-##### 方法二：打包为 .crx 文件（可选）
+查看 [Electron 快速开始指南](./docs/ELECTRON_QUICKSTART.md)
 
-如果需要打包成 `.crx` 文件：
-
-1. 在扩展管理页面，点击"打包扩展程序"
-2. 选择 `dist` 文件夹作为扩展根目录
-3. 点击"打包扩展程序"
-4. 生成的 `.crx` 文件可以分发给其他用户
-
-#### 方式 B：纯浏览器网页应用
-
-将 `dist` 文件夹部署为静态网站，用户可以直接在浏览器中访问使用。
-
-**快速部署**：
-```bash
-# 构建完成后，预览（可选）
-npm run preview
-
-# 然后将 dist 文件夹部署到任何静态托管服务
-# 详细部署指南请查看：docs/BROWSER_DEPLOY.md
-```
-
-支持的部署平台：
-- GitHub Pages
-- Netlify
-- Vercel
-- 自建服务器（Nginx）
-- 其他静态托管服务
-
-**详细部署步骤**：查看 [BROWSER_DEPLOY.md](./docs/BROWSER_DEPLOY.md)
-
-## 开发说明
-
-### 开发模式
+### 本地开发
 
 ```bash
+# 安装依赖
+npm install
+
+# 开发模式
 npm run dev
+
+# 构建
+npm run build
 ```
 
-开发模式下，Vite 会启动开发服务器。但 Chrome 扩展需要加载构建后的文件，所以开发时建议：
-
-1. 运行 `npm run dev` 启动开发服务器（用于热重载）
-2. 运行 `npm run build` 构建到 `dist` 目录
-3. 在 Chrome 中重新加载扩展（点击扩展卡片上的刷新按钮）
-
-### 项目结构
+## 项目结构
 
 ```
 devtools-extension/
-├── src/
-│   ├── core/           # 核心功能函数
-│   │   ├── url.ts      # URL 编码/解码
-│   │   ├── hash.ts     # 加密/哈希算法
-│   │   ├── time.ts     # 时间戳处理
-│   │   ├── json.ts     # JSON 处理
-│   │   ├── text.ts     # 文本处理
-│   │   └── diff.ts     # 差异对比
-│   ├── tools/          # 工具组件
-│   │   ├── UrlTool.vue
-│   │   ├── Md5Tool.vue
-│   │   ├── TimestampTool.vue
-│   │   ├── JsonTool.vue
-│   │   ├── TextTool.vue
-│   │   ├── UuidTool.vue
-│   │   ├── RegexTool.vue
-│   │   ├── QrcodeTool.vue
-│   │   └── DiffTool.vue
-│   ├── App.vue         # 主应用组件
-│   ├── main.ts         # 入口文件
-│   └── styles.css      # 全局样式
-├── dist/               # 构建输出目录（构建后生成）
-├── index.html          # HTML 入口
-├── manifest.json       # Chrome 扩展清单文件
-├── package.json        # 项目配置
-├── tsconfig.json       # TypeScript 配置
-└── vite.config.ts      # Vite 配置
+├── src/              # 源代码
+│   ├── core/         # 核心功能函数
+│   └── tools/        # 工具组件
+├── dist/             # 构建输出
+├── docs/             # 文档
+└── electron/         # Electron 配置
 ```
-
-### 重新加载扩展
-
-开发过程中，每次修改代码后：
-
-1. 运行 `npm run build` 重新构建
-2. 在 Chrome 扩展管理页面（`chrome://extensions/`）
-3. 找到 "DevTools Suite" 扩展
-4. 点击刷新图标 🔄 重新加载扩展
-
-### 调试
-
-- 右键点击扩展图标 → "检查弹出内容"，可以打开开发者工具进行调试
-- 在扩展管理页面，点击"检查视图"也可以打开开发者工具
 
 ## 注意事项
 
