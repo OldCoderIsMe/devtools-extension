@@ -4,7 +4,7 @@
   "private": false,
   "main": "electron/main.js",
   "scripts": {
-    "dev": "vite",
+    "dev": "node generate-favicon.js && vite",
     "build": "vite build && node copy-manifest.js",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",
