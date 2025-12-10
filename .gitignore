@@ -1,0 +1,11 @@
+node_modules
+dist
+.idea
+.vscode
+.DS_Store
+store-assets
+*.zip
+devtools-suite-*.zip
+release
+*.dmg
+*.app

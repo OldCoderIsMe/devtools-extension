@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>DevTools Suite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      /* 基础样式 - 适用于所有环境 */
+      html, body {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      /* Chrome 插件 popup 窗口样式 - 仅在 Chrome 插件环境中生效 */
+      /* 这些样式会通过 JavaScript 动态添加 chrome-extension-env class 后生效 */
+    </style>
+    <script>
+      // 检测 Chrome 插件环境并应用样式
+      (function() {
+        const isChromeExtension = typeof chrome !== 'undefined' && 
+          chrome.runtime && chrome.runtime.id && 
+          !(typeof chrome !== 'undefined' && chrome.devtools);
+        
+        if (isChromeExtension) {
+          document.documentElement.classList.add('chrome-extension-env');
+          document.body.classList.add('chrome-extension-env');
+          
+          // 应用 Chrome 插件专用样式
+          const style = document.createElement('style');
+          style.textContent = `
+            html.chrome-extension-env, body.chrome-extension-env {
+              width: 720px !important;
+              height: 480px !important;
+              min-width: 720px !important;
+              min-height: 480px !important;
+              max-width: 720px !important;
+              max-height: 480px !important;
+              overflow: hidden !important;
+              display: flex !important;
+              flex-direction: column !important;
+            }
+            html.chrome-extension-env #app,
+            body.chrome-extension-env #app {
+              width: 720px !important;
+              height: 480px !important;
+              min-width: 720px !important;
+              min-height: 480px !important;
+              max-width: 720px !important;
+              max-height: 480px !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              display: flex !important;
+              flex-direction: column !important;
+              flex-shrink: 0 !important;
+            }
+            html.chrome-extension-env .app,
+            body.chrome-extension-env .app {
+              width: 720px !important;
+              height: 480px !important;
+              min-width: 720px !important;
+              min-height: 480px !important;
+              max-width: 720px !important;
+              max-height: 480px !important;
+              flex-shrink: 0 !important;
+            }
+          `;
+          document.head.appendChild(style);
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,846 @@
+:root {
+  /* 暗黑主题（默认） */
+  --bg-primary: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  --bg-sidebar: linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.2) 100%);
+  --bg-card: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 100%);
+  --bg-input: rgba(0, 0, 0, 0.2);
+  --bg-input-focus: rgba(0, 0, 0, 0.3);
+  --bg-tool-item-hover: rgba(255, 255, 255, 0.1);
+  --bg-tool-item-active: linear-gradient(135deg, rgba(59, 130, 255, 0.3) 0%, rgba(37, 99, 235, 0.4) 100%);
+  --bg-btn-secondary: rgba(255, 255, 255, 0.1);
+  --bg-btn-secondary-hover: rgba(255, 255, 255, 0.15);
+  --bg-select: rgba(0, 0, 0, 0.2);
+  --bg-scrollbar-track: rgba(0, 0, 0, 0.2);
+  --bg-scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --bg-scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+  
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.9);
+  --text-tertiary: rgba(255, 255, 255, 0.7);
+  --text-quaternary: rgba(255, 255, 255, 0.6);
+  --text-placeholder: rgba(255, 255, 255, 0.4);
+  
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-color-input: rgba(255, 255, 255, 0.15);
+  --border-color-focus: rgba(59, 130, 246, 0.6);
+  
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --shadow-btn: 0 2px 8px rgba(59, 130, 246, 0.3);
+  --shadow-btn-hover: 0 4px 12px rgba(59, 130, 246, 0.4);
+  --shadow-input-focus: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-tool-active: 0 2px 8px rgba(59, 130, 246, 0.2);
+  
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  
+  --diff-added-bg: rgba(34, 197, 94, 0.2);
+  --diff-added-text: #4ade80;
+  --diff-removed-bg: rgba(239, 68, 68, 0.2);
+  --diff-removed-text: #f87171;
+  --diff-result-bg: rgba(0, 0, 0, 0.3);
+  --diff-result-border: rgba(255, 255, 255, 0.15);
+  
+  --match-bg: rgba(59, 130, 246, 0.2);
+  --match-border: rgba(59, 130, 246, 0.3);
+  --match-text: #93c5fd;
+  
+  --replace-result-bg: rgba(0, 0, 0, 0.3);
+  --replace-result-border: rgba(255, 255, 255, 0.1);
+}
+
+.app.light-theme {
+  /* 浅色主题 */
+  --bg-primary: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
+  --bg-sidebar: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.95) 100%);
+  --bg-card: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+  --bg-input: rgba(255, 255, 255, 0.8);
+  --bg-input-focus: rgba(255, 255, 255, 1);
+  --bg-tool-item-hover: rgba(0, 0, 0, 0.05);
+  --bg-tool-item-active: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.2) 100%);
+  --bg-btn-secondary: rgba(0, 0, 0, 0.05);
+  --bg-btn-secondary-hover: rgba(0, 0, 0, 0.08);
+  --bg-select: rgba(255, 255, 255, 0.8);
+  --bg-scrollbar-track: rgba(0, 0, 0, 0.05);
+  --bg-scrollbar-thumb: rgba(0, 0, 0, 0.2);
+  --bg-scrollbar-thumb-hover: rgba(0, 0, 0, 0.3);
+  
+  --text-primary: #1f2937;
+  --text-secondary: #374151;
+  --text-tertiary: #6b7280;
+  --text-quaternary: #9ca3af;
+  --text-placeholder: rgba(0, 0, 0, 0.4);
+  
+  --border-color: rgba(0, 0, 0, 0.1);
+  --border-color-input: rgba(0, 0, 0, 0.15);
+  --border-color-focus: rgba(59, 130, 246, 0.6);
+  
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --shadow-btn: 0 2px 8px rgba(59, 130, 246, 0.25);
+  --shadow-btn-hover: 0 4px 12px rgba(59, 130, 246, 0.35);
+  --shadow-input-focus: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-tool-active: 0 2px 8px rgba(59, 130, 246, 0.2);
+  
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231f2937' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  
+  --diff-added-bg: rgba(34, 197, 94, 0.15);
+  --diff-added-text: #16a34a;
+  --diff-removed-bg: rgba(239, 68, 68, 0.15);
+  --diff-removed-text: #dc2626;
+  --diff-result-bg: rgba(255, 255, 255, 0.8);
+  --diff-result-border: rgba(0, 0, 0, 0.1);
+  
+  --match-bg: rgba(59, 130, 246, 0.15);
+  --match-border: rgba(59, 130, 246, 0.25);
+  --match-text: #2563eb;
+  
+  --replace-result-bg: rgba(255, 255, 255, 0.9);
+  --replace-result-border: rgba(0, 0, 0, 0.1);
+}
+
+.app.light-theme .brand-icon {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.25) 100%);
+  color: #2563eb;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.app.light-theme .brand-text {
+  background: linear-gradient(135deg, var(--text-primary) 0%, rgba(37, 99, 235, 0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+    'Helvetica Neue', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Electron 环境和浏览器直接打开：body 不需要居中，直接撑满 */
+body.electron-env {
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Chrome 插件环境：使用固定尺寸 */
+body.chrome-extension-env,
+html.chrome-extension-env {
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  width: 720px !important;
+  height: 480px !important;
+  min-width: 720px !important;
+  min-height: 480px !important;
+  max-width: 720px !important;
+  max-height: 480px !important;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Electron 环境和浏览器直接打开：app 容器撑满 */
+body.electron-env #app {
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Chrome 插件环境：app 容器使用固定尺寸 */
+body.chrome-extension-env #app,
+html.chrome-extension-env #app {
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  width: 720px !important;
+  height: 480px !important;
+  min-width: 720px !important;
+  min-height: 480px !important;
+  max-width: 720px !important;
+  max-height: 480px !important;
+  flex-shrink: 0 !important;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  /* 默认尺寸（用于独立页面和 Chrome 插件） */
+  width: 720px;
+  height: 480px;
+  min-width: 720px;
+  min-height: 480px;
+  box-sizing: border-box;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: background 0.3s ease, color 0.3s ease, width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
+}
+
+/* Electron 环境和浏览器直接打开：使用 100% 尺寸撑满窗口 */
+.app.electron {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+/* 浏览器直接打开时（非 Electron，非 Chrome 插件）：也撑满窗口 */
+body:not(.electron-env):not(.chrome-extension-env) #app {
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+body:not(.electron-env):not(.chrome-extension-env) .app {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+/* Chrome 插件环境：使用固定尺寸，确保窗口正确显示 */
+.app.chrome-extension {
+  width: 720px !important;
+  height: 480px !important;
+  min-width: 720px !important;
+  min-height: 480px !important;
+  max-width: 720px !important;
+  max-height: 480px !important;
+  border-radius: 0 !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Chrome 插件环境：确保 html 和 body 也撑满 */
+.chrome-extension-env {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+/* 全屏状态 */
+.app.fullscreen {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* 应用内容区域（侧边栏 + 主内容） */
+.app-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Electron 环境：内容区域撑满 */
+.app.electron .app-content {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Chrome 插件环境：确保内容区域有足够高度 */
+.app.chrome-extension .app-content {
+  min-height: 400px;
+  flex: 1 1 auto;
+}
+
+/* Electron 环境：顶部可拖动区域 */
+.electron-titlebar {
+  height: 28px;
+  width: 100%;
+  background: transparent;
+  -webkit-app-region: drag;
+  flex-shrink: 0;
+  z-index: 1000;
+  position: relative;
+}
+
+/* 隐私保护横幅（移到最底部） */
+.privacy-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.25) 100%);
+  border-top: 1px solid rgba(34, 197, 94, 0.3);
+  border-bottom: none;
+  color: #4ade80;
+  font-size: 12px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -2px 8px rgba(34, 197, 94, 0.15);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.app.light-theme .privacy-banner {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(22, 163, 74, 0.2) 100%);
+  border-top: 1px solid rgba(34, 197, 94, 0.25);
+  border-bottom: none;
+  color: #16a34a;
+}
+
+.privacy-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.privacy-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.privacy-text {
+  flex: 1;
+  letter-spacing: 0.2px;
+}
+
+.privacy-right {
+  display: flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+  margin-left: auto;
+  text-align: right;
+}
+
+.developer-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.developer-label {
+  font-size: 10px;
+  font-style: italic;
+  opacity: 0.8;
+  line-height: 1.2;
+}
+
+.developer-name {
+  font-size: 10px;
+  font-style: italic;
+  opacity: 0.9;
+  line-height: 1.2;
+}
+
+/* 主内容区域 */
+
+/* 侧边栏 */
+.sidebar {
+  width: 180px;
+  background: var(--bg-sidebar);
+  backdrop-filter: blur(20px);
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border-right: 1px solid var(--border-color);
+  transition: background 0.3s ease, border-color 0.3s ease;
+  overflow: hidden;
+}
+
+/* 侧边栏头部（固定区域） */
+.sidebar-header {
+  flex-shrink: 0;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Electron 环境：所有交互元素需要禁用拖动 */
+.electron .sidebar-header *,
+.electron .tool-item,
+.electron .main *,
+.electron .developer-info,
+.electron .privacy-banner {
+  -webkit-app-region: no-drag;
+}
+
+.sidebar-title {
+  font-size: 17px;
+  font-weight: 600;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 侧边栏控制按钮区域 */
+.sidebar-controls {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.35) 100%);
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  color: #3b82f6;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+}
+
+.brand-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.brand-icon-svg {
+  width: 20px;
+  height: 20px;
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* 如果图标图片加载失败或被隐藏，显示 SVG 后备 */
+.brand-icon-img[style*="display: none"] ~ .brand-icon-svg,
+.brand-icon:not(:has(.brand-icon-img:not([style*="display: none"]))) .brand-icon-svg {
+  display: block;
+}
+
+.sidebar-title:hover .brand-icon {
+  transform: rotate(15deg) scale(1.05);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+.brand-text {
+  flex: 1;
+  background: linear-gradient(135deg, var(--text-primary) 0%, rgba(59, 130, 246, 0.9) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.theme-toggle,
+.fullscreen-toggle,
+.developer-toggle {
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--border-color);
+  background: var(--bg-btn-secondary);
+  flex-shrink: 0;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 10;
+  margin: 0;
+  flex: 1;
+  min-height: 28px;
+}
+
+.theme-toggle:hover,
+.fullscreen-toggle:hover,
+.developer-toggle:hover {
+  background: var(--bg-btn-secondary-hover);
+  color: var(--text-secondary);
+  transform: scale(1.05);
+}
+
+.theme-toggle span,
+.fullscreen-toggle span,
+.developer-toggle span {
+  display: block;
+  line-height: 1;
+}
+
+.tool-list {
+  list-style: none;
+  margin: 0;
+  padding: 12px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.tool-item {
+  padding: 10px 12px;
+  margin: 4px 0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tool-emoji {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tool-name {
+  flex: 1;
+}
+
+.tool-item:hover {
+  background: var(--bg-tool-item-hover);
+  color: var(--text-primary);
+  transform: translateX(2px);
+}
+
+.tool-item.active {
+  background: var(--bg-tool-item-active);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-tool-active);
+}
+
+/* 主区域 */
+.main {
+  flex: 1;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  background: transparent;
+  min-height: 0;
+}
+
+/* Electron 环境：主区域撑满 */
+.app.electron .main {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Chrome 插件环境：确保主区域有足够高度 */
+.app.chrome-extension .main {
+  min-height: 350px;
+}
+
+.tool-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-color);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tool-title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.4px;
+}
+
+.field-label {
+  display: block;
+  margin: 12px 0 6px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+.textarea,
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color-input);
+  font-size: 13px;
+  resize: vertical;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+}
+
+.textarea::placeholder,
+.input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.textarea:focus,
+.input:focus {
+  outline: none;
+  border-color: var(--border-color-focus);
+  background: var(--bg-input-focus);
+  box-shadow: var(--shadow-input-focus);
+}
+
+select.input {
+  background: var(--bg-select);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+select.input option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.btn-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-btn);
+  letter-spacing: 0.2px;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-btn-hover);
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn.secondary {
+  background: var(--bg-btn-secondary);
+  color: var(--text-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+}
+
+.btn.secondary:hover {
+  background: var(--bg-btn-secondary-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--text-quaternary);
+}
+
+.hint.error {
+  color: #ff6b6b;
+}
+
+.section {
+  margin-bottom: 16px;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 16px 0;
+}
+
+.result-line {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.result-line strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* 滚动条样式 */
+.tool-list::-webkit-scrollbar,
+.main::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tool-list::-webkit-scrollbar-track,
+.main::-webkit-scrollbar-track {
+  background: var(--bg-scrollbar-track);
+  border-radius: 4px;
+}
+
+.tool-list::-webkit-scrollbar-thumb,
+.main::-webkit-scrollbar-thumb {
+  background: var(--bg-scrollbar-thumb);
+  border-radius: 4px;
+}
+
+.tool-list::-webkit-scrollbar-thumb:hover,
+.main::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-scrollbar-thumb-hover);
+}
+
+/* Checkbox 样式 */
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+/* Select 下拉箭头样式 */
+select.input {
+  appearance: none;
+  background-image: var(--select-arrow);
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* 只读输入框样式 */
+input[readonly],
+textarea[readonly] {
+  opacity: 0.8;
+  cursor: default;
+}
+
+/* 图片样式 */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 开发者信息页面 */
+.developer-info-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+}
+
+.developer-info-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-color);
+  max-width: 500px;
+  width: 100%;
+}
+
+.developer-info-title {
+  margin: 0 0 24px;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.developer-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.developer-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.developer-info-label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.developer-info-value {
+  font-size: 16px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.developer-info-experience {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.experience-item {
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  background: var(--bg-btn-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.experience-separator {
+  color: var(--text-tertiary);
+  opacity: 0.5;
+}
