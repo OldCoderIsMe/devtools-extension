@@ -242,20 +242,12 @@ function createQuickSearchWindow() {
   });
 
   // 失去焦点时隐藏窗口（类似 Spotlight）
-  // 但不要隐藏主窗口
   quickSearchWindow.on('blur', () => {
     if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
       // 延迟隐藏，避免与主窗口显示冲突
       setTimeout(() => {
         if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
           quickSearchWindow.hide();
-          // 确保主窗口显示并聚焦
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            if (!mainWindow.isVisible()) {
-              mainWindow.show();
-            }
-            mainWindow.focus();
-          }
         }
       }, 100);
     }

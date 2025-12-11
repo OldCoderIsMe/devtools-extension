@@ -2,6 +2,7 @@
   <div class="quick-search-container">
     <div class="quick-search-window">
       <div class="quick-search-header">
+        <div class="header-drag-area"></div>
         <input
           ref="inputRef"
           v-model="input"
@@ -39,25 +40,19 @@
         <div v-else-if="!input.trim()" class="quick-search-hint">
           <div class="hint-title">快速命令</div>
           <div class="hint-list">
-            <div class="hint-item">
-              <span class="hint-command">md5</span>
-              <span class="hint-desc">计算 MD5 哈希值</span>
-            </div>
-            <div class="hint-item">
-              <span class="hint-command">sha256</span>
-              <span class="hint-desc">计算 SHA256 哈希值</span>
-            </div>
-            <div class="hint-item">
-              <span class="hint-command">base64</span>
-              <span class="hint-desc">Base64 编码</span>
-            </div>
-            <div class="hint-item">
-              <span class="hint-command">urlencode</span>
-              <span class="hint-desc">URL 编码</span>
-            </div>
-            <div class="hint-item">
-              <span class="hint-command">timestamp</span>
-              <span class="hint-desc">时间戳转日期</span>
+            <div 
+              v-for="cmd in allCommands" 
+              :key="cmd.name"
+              class="hint-item"
+              @click="selectCommand(cmd)"
+            >
+              <div class="hint-command-col">
+                <span class="hint-command">{{ cmd.name }}</span>
+                <span v-if="cmd.aliases.length > 0" class="hint-aliases">
+                  {{ cmd.aliases.join(', ') }}
+                </span>
+              </div>
+              <span class="hint-desc">{{ cmd.description }}</span>
             </div>
           </div>
         </div>
@@ -87,13 +82,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { parseAndExecuteCommand } from '@/core/commandParser';
-import { fuzzyMatchCommands, type CommandInfo } from '@/core/commands';
+import { fuzzyMatchCommands, AVAILABLE_COMMANDS, type CommandInfo } from '@/core/commands';
 
 const input = ref('');
 const result = ref<{ success: boolean; output?: string; error?: string } | null>(null);
 const inputRef = ref<HTMLInputElement | null>(null);
 const selectedIndex = ref(0);
 const suggestions = ref<CommandInfo[]>([]);
+const allCommands = ref<CommandInfo[]>(AVAILABLE_COMMANDS);
 
 // 判断是否显示建议列表
 const showSuggestions = computed(() => {
@@ -130,6 +126,17 @@ function handleInput() {
 
 function selectSuggestion(suggestion: CommandInfo) {
   input.value = suggestion.name + ' ';
+  inputRef.value?.focus();
+  // 移动光标到末尾
+  nextTick(() => {
+    if (inputRef.value) {
+      inputRef.value.setSelectionRange(inputRef.value.value.length, inputRef.value.value.length);
+    }
+  });
+}
+
+function selectCommand(cmd: CommandInfo) {
+  input.value = cmd.name + ' ';
   inputRef.value?.focus();
   // 移动光标到末尾
   nextTick(() => {
@@ -237,8 +244,9 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 20px;
   box-sizing: border-box;
 }
@@ -246,8 +254,11 @@ onUnmounted(() => {
 .quick-search-window {
   width: 100%;
   max-width: 600px;
-  background: #1a1a2e;
+  background: rgba(26, 26, 46, 0.85);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
   border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   overflow: hidden;
   display: flex;
@@ -256,24 +267,43 @@ onUnmounted(() => {
 
 .quick-search-header {
   padding: 20px;
+  padding-top: 16px;
+  padding-bottom: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.header-drag-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  -webkit-app-region: drag;
+  cursor: move;
 }
 
 .quick-search-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   padding: 12px 16px;
   font-size: 16px;
   color: #ffffff;
   outline: none;
   transition: all 0.2s;
+  position: relative;
+  z-index: 1;
+  -webkit-app-region: no-drag;
 }
 
 .quick-search-input:focus {
-  border-color: rgba(100, 150, 255, 0.5);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(100, 150, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 2px rgba(100, 150, 255, 0.2);
 }
 
 .quick-search-input::placeholder {
@@ -284,7 +314,30 @@ onUnmounted(() => {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
-  min-height: 200px;
+  overflow-x: hidden;
+  min-height: 0;
+  max-height: calc(100vh - 180px);
+}
+
+/* 自定义滚动条样式 */
+.quick-search-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.quick-search-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  margin: 4px 0;
+}
+
+.quick-search-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.quick-search-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .quick-search-hint {
@@ -306,15 +359,24 @@ onUnmounted(() => {
 
 .hint-item {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
+  align-items: flex-start;
+  gap: 32px;
+  padding: 10px 8px;
   border-radius: 6px;
   transition: background 0.2s;
+  cursor: pointer;
 }
 
 .hint-item:hover {
   background: rgba(255, 255, 255, 0.05);
+}
+
+.hint-command-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+  flex-shrink: 0;
 }
 
 .hint-command {
@@ -322,12 +384,24 @@ onUnmounted(() => {
   font-size: 13px;
   color: #64b5f6;
   font-weight: 600;
-  min-width: 100px;
+  line-height: 1.4;
+}
+
+.hint-aliases {
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+  line-height: 1.4;
 }
 
 .hint-desc {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.7);
+  flex: 1;
+  min-width: 0;
+  line-height: 1.4;
+  padding-top: 2px;
 }
 
 .quick-search-result {
@@ -390,6 +464,7 @@ onUnmounted(() => {
   padding: 12px 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   text-align: center;
+  flex-shrink: 0;
 }
 
 .footer-hint {
