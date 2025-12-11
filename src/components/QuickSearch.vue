@@ -40,25 +40,19 @@
         <div v-else-if="!input.trim()" class="quick-search-hint">
           <div class="hint-title">快速命令</div>
           <div class="hint-list">
-            <div class="hint-item">
-              <span class="hint-command">md5</span>
-              <span class="hint-desc">计算 MD5 哈希值</span>
-            </div>
-            <div class="hint-item">
-              <span class="hint-command">sha256</span>
-              <span class="hint-desc">计算 SHA256 哈希值</span>
-            </div>
-            <div class="hint-item">
-              <span class="hint-command">base64</span>
-              <span class="hint-desc">Base64 编码</span>
-            </div>
-            <div class="hint-item">
-              <span class="hint-command">urlencode</span>
-              <span class="hint-desc">URL 编码</span>
-            </div>
-            <div class="hint-item">
-              <span class="hint-command">timestamp</span>
-              <span class="hint-desc">时间戳转日期</span>
+            <div 
+              v-for="cmd in allCommands" 
+              :key="cmd.name"
+              class="hint-item"
+              @click="selectCommand(cmd)"
+            >
+              <div class="hint-command-col">
+                <span class="hint-command">{{ cmd.name }}</span>
+                <span v-if="cmd.aliases.length > 0" class="hint-aliases">
+                  {{ cmd.aliases.join(', ') }}
+                </span>
+              </div>
+              <span class="hint-desc">{{ cmd.description }}</span>
             </div>
           </div>
         </div>
@@ -88,13 +82,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { parseAndExecuteCommand } from '@/core/commandParser';
-import { fuzzyMatchCommands, type CommandInfo } from '@/core/commands';
+import { fuzzyMatchCommands, AVAILABLE_COMMANDS, type CommandInfo } from '@/core/commands';
 
 const input = ref('');
 const result = ref<{ success: boolean; output?: string; error?: string } | null>(null);
 const inputRef = ref<HTMLInputElement | null>(null);
 const selectedIndex = ref(0);
 const suggestions = ref<CommandInfo[]>([]);
+const allCommands = ref<CommandInfo[]>(AVAILABLE_COMMANDS);
 
 // 判断是否显示建议列表
 const showSuggestions = computed(() => {
@@ -131,6 +126,17 @@ function handleInput() {
 
 function selectSuggestion(suggestion: CommandInfo) {
   input.value = suggestion.name + ' ';
+  inputRef.value?.focus();
+  // 移动光标到末尾
+  nextTick(() => {
+    if (inputRef.value) {
+      inputRef.value.setSelectionRange(inputRef.value.value.length, inputRef.value.value.length);
+    }
+  });
+}
+
+function selectCommand(cmd: CommandInfo) {
+  input.value = cmd.name + ' ';
   inputRef.value?.focus();
   // 移动光标到末尾
   nextTick(() => {
