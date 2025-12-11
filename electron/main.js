@@ -325,9 +325,15 @@ function registerIpcHandlers() {
 
 // 创建菜单栏图标（Tray）
 function createTray() {
-  // 查找图标文件
-  const iconPath = path.join(__dirname, '../icons/icon.icns');
-  const iconExists = require('fs').existsSync(iconPath);
+  // 优先使用菜单栏专用图标
+  let iconPath = path.join(__dirname, '../icons/menu-icon.png');
+  let iconExists = require('fs').existsSync(iconPath);
+  
+  // 如果没有菜单栏图标，使用应用图标
+  if (!iconExists) {
+    iconPath = path.join(__dirname, '../icons/icon.icns');
+    iconExists = require('fs').existsSync(iconPath);
+  }
   
   if (!iconExists) {
     console.log('[Electron] 未找到图标文件，跳过创建 Tray');
@@ -335,7 +341,20 @@ function createTray() {
   }
 
   // 创建原生图片
-  const image = nativeImage.createFromPath(iconPath);
+  let image = nativeImage.createFromPath(iconPath);
+  
+  // 如果是 PNG 格式，调整尺寸适合菜单栏（macOS 菜单栏图标通常是 22x22 或 18x18）
+  if (iconPath.endsWith('.png')) {
+    // macOS 菜单栏图标推荐尺寸
+    const sizes = [22, 18, 16];
+    for (const size of sizes) {
+      const resized = image.resize({ width: size, height: size });
+      if (!resized.isEmpty()) {
+        image = resized;
+        break;
+      }
+    }
+  }
   
   // 设置不同尺寸的图标（macOS 菜单栏需要不同尺寸）
   if (image.isEmpty()) {
@@ -482,6 +501,7 @@ function createMenu() {
 app.whenReady().then(() => {
   createWindow();
   createMenu();
+  createTray(); // 创建菜单栏图标
   registerIpcHandlers();
   
   // 注册全局快捷键（从设置中读取）
@@ -513,6 +533,8 @@ app.on('will-quit', () => {
 
 // 当所有窗口关闭时退出应用（macOS 除外）
 app.on('window-all-closed', () => {
+  // macOS 上，即使所有窗口关闭，应用也继续运行（因为有菜单栏图标）
+  // 其他平台上，关闭所有窗口时退出应用
   if (process.platform !== 'darwin') {
     app.quit();
   }
