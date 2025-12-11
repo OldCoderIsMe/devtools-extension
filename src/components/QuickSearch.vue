@@ -14,7 +14,29 @@
         />
       </div>
       <div class="quick-search-content">
-        <div v-if="!input.trim()" class="quick-search-hint">
+        <!-- 命令提示列表 -->
+        <div v-if="showSuggestions && suggestions.length > 0" class="suggestions-list">
+          <div
+            v-for="(suggestion, index) in suggestions"
+            :key="index"
+            class="suggestion-item"
+            :class="{ active: selectedIndex === index }"
+            @click="selectSuggestion(suggestion)"
+            @mouseenter="selectedIndex = index"
+          >
+            <div class="suggestion-command">
+              <span class="command-name">{{ suggestion.name }}</span>
+              <span v-if="suggestion.aliases.length > 0" class="command-aliases">
+                ({{ suggestion.aliases.join(', ') }})
+              </span>
+            </div>
+            <div class="suggestion-desc">{{ suggestion.description }}</div>
+            <div class="suggestion-example">{{ suggestion.example }}</div>
+          </div>
+        </div>
+        
+        <!-- 空状态提示 -->
+        <div v-else-if="!input.trim()" class="quick-search-hint">
           <div class="hint-title">快速命令</div>
           <div class="hint-list">
             <div class="hint-item">
@@ -39,7 +61,9 @@
             </div>
           </div>
         </div>
-        <div v-else-if="result" class="quick-search-result">
+        
+        <!-- 命令执行结果 -->
+        <div v-else-if="result && !showSuggestions" class="quick-search-result">
           <div v-if="result.success" class="result-success">
             <div class="result-label">结果:</div>
             <div class="result-output">{{ result.output }}</div>
@@ -61,28 +85,99 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { parseAndExecuteCommand } from '@/core/commandParser';
+import { fuzzyMatchCommands, type CommandInfo } from '@/core/commands';
 
 const input = ref('');
 const result = ref<{ success: boolean; output?: string; error?: string } | null>(null);
 const inputRef = ref<HTMLInputElement | null>(null);
+const selectedIndex = ref(0);
+const suggestions = ref<CommandInfo[]>([]);
+
+// 判断是否显示建议列表
+const showSuggestions = computed(() => {
+  const trimmed = input.value.trim();
+  if (!trimmed) return false;
+  
+  // 如果输入包含空格，说明已经有参数了，不显示建议
+  const parts = trimmed.split(/\s+/);
+  if (parts.length > 1) return false;
+  
+  return true;
+});
+
+// 监听输入变化，更新建议列表
+watch(input, () => {
+  const trimmed = input.value.trim();
+  if (showSuggestions.value) {
+    suggestions.value = fuzzyMatchCommands(trimmed);
+    selectedIndex.value = 0;
+  } else {
+    suggestions.value = [];
+    // 如果有输入且不是显示建议状态，执行命令
+    if (trimmed) {
+      result.value = parseAndExecuteCommand(trimmed);
+    } else {
+      result.value = null;
+    }
+  }
+});
 
 function handleInput() {
-  const trimmed = input.value.trim();
-  if (!trimmed) {
-    result.value = null;
-    return;
-  }
+  // 输入变化由 watch 处理
+}
 
-  result.value = parseAndExecuteCommand(trimmed);
+function selectSuggestion(suggestion: CommandInfo) {
+  input.value = suggestion.name + ' ';
+  inputRef.value?.focus();
+  // 移动光标到末尾
+  nextTick(() => {
+    if (inputRef.value) {
+      inputRef.value.setSelectionRange(inputRef.value.value.length, inputRef.value.value.length);
+    }
+  });
 }
 
 function handleKeyDown(e: KeyboardEvent) {
   // ESC 关闭窗口
   if (e.key === 'Escape') {
+    if (showSuggestions.value && suggestions.value.length > 0) {
+      // 如果正在显示建议，先关闭建议
+      suggestions.value = [];
+      return;
+    }
     closeWindow();
+    return;
   }
+  
+  // 上下箭头选择建议
+  if (showSuggestions.value && suggestions.value.length > 0) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selectedIndex.value = Math.min(selectedIndex.value + 1, suggestions.value.length - 1);
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selectedIndex.value = Math.max(selectedIndex.value - 1, 0);
+      return;
+    }
+    // Enter 选择建议
+    if (e.key === 'Enter' && selectedIndex.value >= 0 && selectedIndex.value < suggestions.value.length) {
+      e.preventDefault();
+      selectSuggestion(suggestions.value[selectedIndex.value]);
+      return;
+    }
+  }
+  
+  // Tab 选择第一个建议
+  if (e.key === 'Tab' && showSuggestions.value && suggestions.value.length > 0) {
+    e.preventDefault();
+    selectSuggestion(suggestions.value[0]);
+    return;
+  }
+  
   // Cmd/Ctrl + Enter 复制结果
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && result.value?.success && result.value.output) {
     copyResult();
@@ -300,5 +395,62 @@ onUnmounted(() => {
 .footer-hint {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.4);
+}
+
+/* 建议列表样式 */
+.suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.suggestion-item:hover,
+.suggestion-item.active {
+  background: rgba(100, 150, 255, 0.15);
+  border-color: rgba(100, 150, 255, 0.3);
+}
+
+.suggestion-command {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.command-name {
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64b5f6;
+}
+
+.command-aliases {
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.suggestion-desc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 4px;
+}
+
+.suggestion-example {
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 4px;
 }
 </style>
