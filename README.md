@@ -5,16 +5,16 @@
 ## 📸 截图预览
 
 ### 🌐 浏览器网页版
-![浏览器网页版](images/browser-screenshot.png)
+![浏览器网页版](images/browser_srceenshot.png)
 
 ### 🔌 Chrome 浏览器扩展
-![Chrome 浏览器扩展](images/chrome-extension-screenshot.png)
+![Chrome 浏览器扩展](images/chrome_ext_screenshot.png)
 
 ### 🖥️ macOS 桌面客户端
-![macOS 桌面客户端](images/macos-client-screenshot.png)
+![macOS 桌面客户端](images/macos_screenshot.png)
 
 ### ⚡ 快速搜索弹窗
-![快速搜索弹窗](images/quick-search-screenshot.png)
+![快速搜索弹窗](images/key_screenshot.png)
 
 ## 🌐 在线体验
 
