@@ -209,9 +209,22 @@ function createQuickSearchWindow() {
   });
 
   // 失去焦点时隐藏窗口（类似 Spotlight）
+  // 但不要隐藏主窗口
   quickSearchWindow.on('blur', () => {
     if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
-      quickSearchWindow.hide();
+      // 延迟隐藏，避免与主窗口显示冲突
+      setTimeout(() => {
+        if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
+          quickSearchWindow.hide();
+          // 确保主窗口显示并聚焦
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            if (!mainWindow.isVisible()) {
+              mainWindow.show();
+            }
+            mainWindow.focus();
+          }
+        }
+      }, 100);
     }
   });
 }
@@ -374,9 +387,19 @@ app.whenReady().then(() => {
   registerGlobalShortcuts();
 
   app.on('activate', () => {
-    // 在 macOS 上，当单击 dock 图标并且没有其他窗口打开时，
-    // 通常在应用程序中重新创建一个窗口。
-    if (BrowserWindow.getAllWindows().length === 0) {
+    // 在 macOS 上，当单击 dock 图标时，显示主窗口
+    if (mainWindow) {
+      if (mainWindow.isDestroyed()) {
+        createWindow();
+      } else {
+        // 如果主窗口存在但被隐藏，显示它
+        if (!mainWindow.isVisible()) {
+          mainWindow.show();
+        }
+        mainWindow.focus();
+      }
+    } else {
+      // 如果没有主窗口，创建一个
       createWindow();
     }
   });
