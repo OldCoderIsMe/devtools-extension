@@ -2,6 +2,7 @@
   <div class="quick-search-container">
     <div class="quick-search-window">
       <div class="quick-search-header">
+        <div class="header-drag-area"></div>
         <input
           ref="inputRef"
           v-model="input"
@@ -257,6 +258,17 @@ onUnmounted(() => {
 .quick-search-header {
   padding: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.header-drag-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  -webkit-app-region: drag;
+  cursor: move;
 }
 
 .quick-search-input {
