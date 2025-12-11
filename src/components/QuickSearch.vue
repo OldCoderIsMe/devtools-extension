@@ -244,8 +244,9 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 20px;
   box-sizing: border-box;
 }
@@ -303,8 +304,7 @@ onUnmounted(() => {
   padding: 20px;
   overflow-y: auto;
   overflow-x: hidden;
-  min-height: 200px;
-  max-height: calc(100vh - 200px);
+  min-height: 0;
 }
 
 /* 自定义滚动条样式 */
