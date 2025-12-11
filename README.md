@@ -2,6 +2,20 @@
 
 一个功能丰富的开发工具集合，支持三种使用方式：Chrome 浏览器扩展、纯浏览器网页应用、macOS 桌面应用。所有计算都在本地完成，不会上传任何数据，保护您的隐私安全。
 
+## 📸 截图预览
+
+### 🌐 浏览器网页版
+![浏览器网页版](images/browser-screenshot.png)
+
+### 🔌 Chrome 浏览器扩展
+![Chrome 浏览器扩展](images/chrome-extension-screenshot.png)
+
+### 🖥️ macOS 桌面客户端
+![macOS 桌面客户端](images/macos-client-screenshot.png)
+
+### ⚡ 快速搜索弹窗
+![快速搜索弹窗](images/quick-search-screenshot.png)
+
 ## 🌐 在线体验
 
 **立即体验**：[https://oldcoderisme.github.io/devtools-extension/](https://oldcoderisme.github.io/devtools-extension/)
