@@ -22,6 +22,14 @@
 
 无需安装，直接在浏览器中使用所有功能。
 
+## 📦 安装方式
+
+### Chrome 浏览器扩展（推荐）
+
+**Chrome 应用商店**：[安装 DevTools Suite](https://chromewebstore.google.com/detail/devtools-suite/fjebaljoclgdamiognofbdjplmbgkpil?authuser=0&hl=zh-CN)
+
+一键安装，自动更新，集成到浏览器中，方便随时调用。
+
 ## 📦 三种使用方式
 
 ### 🌐 Chrome 浏览器扩展
@@ -73,6 +81,12 @@
 
 ### 方式二：Chrome 浏览器扩展
 
+**推荐：从 Chrome 应用商店安装**
+- 访问 [Chrome 应用商店](https://chromewebstore.google.com/detail/devtools-suite/fjebaljoclgdamiognofbdjplmbgkpil?authuser=0&hl=zh-CN)
+- 点击"添加至 Chrome"即可安装
+- 支持自动更新
+
+**开发者模式安装（用于开发测试）**
 1. **安装依赖并构建**
    ```bash
    npm install
