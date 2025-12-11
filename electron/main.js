@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain, Tray, nativeImage } = require('electron');
 const path = require('path');
 const settings = require('./settings');
 
@@ -9,6 +9,7 @@ const isDev = process.env.NODE_ENV === 'development' ||
 
 let mainWindow;
 let quickSearchWindow = null;
+let tray = null;
 
 function createWindow() {
   // Electron 客户端：获取主显示器的尺寸，撑满窗口
@@ -137,7 +138,19 @@ function createWindow() {
   });
   
 
-  // 当窗口关闭时
+  // 当窗口关闭时（macOS 上不真正关闭，而是隐藏）
+  mainWindow.on('close', (event) => {
+    if (process.platform === 'darwin') {
+      // macOS: 隐藏窗口而不是关闭
+      event.preventDefault();
+      mainWindow.hide();
+    } else {
+      // 其他平台: 真正关闭
+      mainWindow = null;
+    }
+  });
+
+  // 窗口被销毁时
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -308,6 +321,94 @@ function registerIpcHandlers() {
     registerGlobalShortcuts();
     return defaultSettings.shortcuts;
   });
+}
+
+// 创建菜单栏图标（Tray）
+function createTray() {
+  // 查找图标文件
+  const iconPath = path.join(__dirname, '../icons/icon.icns');
+  const iconExists = require('fs').existsSync(iconPath);
+  
+  if (!iconExists) {
+    console.log('[Electron] 未找到图标文件，跳过创建 Tray');
+    return;
+  }
+
+  // 创建原生图片
+  const image = nativeImage.createFromPath(iconPath);
+  
+  // 设置不同尺寸的图标（macOS 菜单栏需要不同尺寸）
+  if (image.isEmpty()) {
+    console.log('[Electron] 无法加载图标，跳过创建 Tray');
+    return;
+  }
+
+  // 创建 Tray
+  tray = new Tray(image);
+  
+  // 设置工具提示
+  tray.setToolTip('DevTools Suite');
+  
+  // 创建上下文菜单
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: '显示主窗口',
+      click: () => {
+        if (mainWindow) {
+          if (mainWindow.isDestroyed()) {
+            createWindow();
+          } else {
+            mainWindow.show();
+            mainWindow.focus();
+          }
+        } else {
+          createWindow();
+        }
+      },
+    },
+    {
+      label: '快速搜索',
+      click: () => {
+        createQuickSearchWindow();
+      },
+    },
+    { type: 'separator' },
+    {
+      label: '关于',
+      click: () => {
+        shell.openExternal('https://github.com/OldCoderIsMe/devtools-extension');
+      },
+    },
+    { type: 'separator' },
+    {
+      label: '退出',
+      click: () => {
+        app.quit();
+      },
+    },
+  ]);
+  
+  tray.setContextMenu(contextMenu);
+  
+  // 点击图标显示/隐藏主窗口
+  tray.on('click', () => {
+    if (mainWindow) {
+      if (mainWindow.isDestroyed()) {
+        createWindow();
+      } else {
+        if (mainWindow.isVisible()) {
+          mainWindow.hide();
+        } else {
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      }
+    } else {
+      createWindow();
+    }
+  });
+  
+  console.log('[Electron] 菜单栏图标已创建');
 }
 
 // 创建应用菜单（macOS）
