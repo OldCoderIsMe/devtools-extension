@@ -71,7 +71,8 @@
     },
     "dmg": {
       "title": "${productName} ${version}",
-      "icon": "icons/icon.icns"
+      "icon": "icons/icon.icns",
+      "contents": []
     }
   }
 }
