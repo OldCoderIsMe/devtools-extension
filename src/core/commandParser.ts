@@ -67,12 +67,14 @@ export function parseAndExecuteCommand(input: string): CommandResult {
 
       case 'urlencode':
       case 'url':
+      case 'ue':
         if (!args) {
           return { success: false, error: '请输入要编码的 URL' };
         }
         return { success: true, output: urlEncode(args) };
 
       case 'urldecode':
+      case 'ud':
         if (!args) {
           return { success: false, error: '请输入要解码的 URL' };
         }

@@ -44,13 +44,13 @@ export const AVAILABLE_COMMANDS: CommandInfo[] = [
   },
   {
     name: 'urlencode',
-    aliases: ['url'],
+    aliases: ['url', 'ue'],
     description: 'URL 编码',
     example: 'urlencode hello world',
   },
   {
     name: 'urldecode',
-    aliases: [],
+    aliases: ['ud'],
     description: 'URL 解码',
     example: 'urldecode hello%20world',
   },
