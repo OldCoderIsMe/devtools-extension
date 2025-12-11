@@ -254,8 +254,11 @@ onUnmounted(() => {
 .quick-search-window {
   width: 100%;
   max-width: 600px;
-  background: #1a1a2e;
+  background: rgba(26, 26, 46, 0.85);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
   border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   overflow: hidden;
   display: flex;
@@ -264,8 +267,12 @@ onUnmounted(() => {
 
 .quick-search-header {
   padding: 20px;
+  padding-top: 16px;
+  padding-bottom: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
+  flex-shrink: 0;
+  z-index: 10;
 }
 
 .header-drag-area {
@@ -280,14 +287,17 @@ onUnmounted(() => {
 
 .quick-search-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   padding: 12px 16px;
   font-size: 16px;
   color: #ffffff;
   outline: none;
   transition: all 0.2s;
+  position: relative;
+  z-index: 1;
+  -webkit-app-region: no-drag;
 }
 
 .quick-search-input:focus {
@@ -305,25 +315,28 @@ onUnmounted(() => {
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
+  max-height: calc(100vh - 180px);
 }
 
 /* 自定义滚动条样式 */
 .quick-search-content::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .quick-search-content::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
+  border-radius: 4px;
+  margin: 4px 0;
 }
 
 .quick-search-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .quick-search-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .quick-search-hint {
@@ -346,8 +359,8 @@ onUnmounted(() => {
 .hint-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px;
+  gap: 24px;
+  padding: 10px 8px;
   border-radius: 6px;
   transition: background 0.2s;
 }
@@ -356,17 +369,33 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.05);
 }
 
+.hint-command-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
 .hint-command {
   font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
   font-size: 13px;
   color: #64b5f6;
   font-weight: 600;
-  min-width: 100px;
+}
+
+.hint-aliases {
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
 }
 
 .hint-desc {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.7);
+  flex: 1;
+  min-width: 0;
 }
 
 .quick-search-result {
@@ -429,6 +458,7 @@ onUnmounted(() => {
   padding: 12px 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   text-align: center;
+  flex-shrink: 0;
 }
 
 .footer-hint {
