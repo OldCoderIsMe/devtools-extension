@@ -332,11 +332,17 @@ function registerIpcHandlers() {
 
 // 创建菜单栏图标（Tray）
 function createTray() {
-  // 优先使用菜单栏专用图标
-  let iconPath = path.join(__dirname, '../icons/menu-icon.png');
+  // 优先使用黑色菜单栏图标
+  let iconPath = path.join(__dirname, '../icons/black_menu.png');
   let iconExists = require('fs').existsSync(iconPath);
   
-  // 如果没有菜单栏图标，使用应用图标
+  // 如果没有黑色菜单图标，使用菜单栏专用图标
+  if (!iconExists) {
+    iconPath = path.join(__dirname, '../icons/menu-icon.png');
+    iconExists = require('fs').existsSync(iconPath);
+  }
+  
+  // 如果还没有，使用应用图标
   if (!iconExists) {
     iconPath = path.join(__dirname, '../icons/icon.icns');
     iconExists = require('fs').existsSync(iconPath);
