@@ -18,11 +18,17 @@ function createWindow() {
   const { width, height } = primaryDisplay.workAreaSize;
   
   // 创建浏览器窗口
-  // 优先使用新的 Dock 图标
-  let iconPath = path.join(__dirname, 'DevToolsDock.icns');
+  // 优先使用新的 DevTools 图标
+  let iconPath = path.join(__dirname, 'DevTools.icns');
   let iconExists = require('fs').existsSync(iconPath);
   
-  // 如果没有找到，使用默认图标
+  // 如果没有找到，使用 Dock 图标
+  if (!iconExists) {
+    iconPath = path.join(__dirname, 'DevToolsDock.icns');
+    iconExists = require('fs').existsSync(iconPath);
+  }
+  
+  // 如果还没有，使用默认图标
   if (!iconExists) {
     iconPath = path.join(__dirname, '../icons/icon.icns');
     iconExists = require('fs').existsSync(iconPath);
@@ -422,6 +428,7 @@ function createTray() {
     {
       label: '退出',
       click: () => {
+        isQuitting = true;
         app.quit();
       },
     },
@@ -464,7 +471,14 @@ function createMenu() {
         { role: 'hideOthers', label: '隐藏其他' },
         { role: 'unhide', label: '显示全部' },
         { type: 'separator' },
-        { role: 'quit', label: '退出 ' + app.getName() },
+        { 
+          role: 'quit', 
+          label: '退出 ' + app.getName(),
+          click: () => {
+            isQuitting = true;
+            app.quit();
+          },
+        },
       ],
     },
     {
