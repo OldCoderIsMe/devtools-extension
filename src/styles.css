@@ -468,6 +468,7 @@ body:not(.electron-env):not(.chrome-extension-env) .app {
 
 .theme-toggle,
 .fullscreen-toggle,
+.settings-toggle,
 .developer-toggle {
   padding: 6px;
   border-radius: 8px;
@@ -492,6 +493,7 @@ body:not(.electron-env):not(.chrome-extension-env) .app {
 
 .theme-toggle:hover,
 .fullscreen-toggle:hover,
+.settings-toggle:hover,
 .developer-toggle:hover {
   background: var(--bg-btn-secondary-hover);
   color: var(--text-secondary);
@@ -500,6 +502,7 @@ body:not(.electron-env):not(.chrome-extension-env) .app {
 
 .theme-toggle span,
 .fullscreen-toggle span,
+.settings-toggle span,
 .developer-toggle span {
   display: block;
   line-height: 1;
@@ -770,6 +773,7 @@ img {
 }
 
 /* 开发者信息页面 */
+.settings-page,
 .developer-info-page {
   display: flex;
   align-items: center;

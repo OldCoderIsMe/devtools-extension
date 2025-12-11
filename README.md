@@ -2,6 +2,20 @@
 
 一个功能丰富的开发工具集合，支持三种使用方式：Chrome 浏览器扩展、纯浏览器网页应用、macOS 桌面应用。所有计算都在本地完成，不会上传任何数据，保护您的隐私安全。
 
+## 📸 截图预览
+
+### 🌐 浏览器网页版
+![浏览器网页版](images/browser_srceenshot.png)
+
+### 🔌 Chrome 浏览器扩展
+![Chrome 浏览器扩展](images/chrome_ext_screenshot.png)
+
+### 🖥️ macOS 桌面客户端
+![macOS 桌面客户端](images/macos_screenshot.png)
+
+### ⚡ 快速搜索弹窗
+![快速搜索弹窗](images/key_screenshot.png)
+
 ## 🌐 在线体验
 
 **立即体验**：[https://oldcoderisme.github.io/devtools-extension/](https://oldcoderisme.github.io/devtools-extension/)
@@ -106,6 +120,55 @@ devtools-extension/
 3. **权限说明**：扩展只需要 `storage` 权限，用于本地数据存储
 
 ## 版本历史
+
+### v0.1.2 - 客户端快捷指令版本 🚀
+
+#### ✨ 新增功能
+
+**快速搜索弹窗（类似 macOS Spotlight）**
+- 🎯 全局快捷键支持（默认 `Cmd+K` / `Cmd+Space`，可自定义）
+- ⚡ 快速命令执行：输入命令和参数即可显示结果
+- 🔍 智能命令提示：输入时自动显示匹配的命令建议
+- 🎨 模糊匹配：支持命令名、别名和描述的智能匹配
+- ⌨️ 键盘导航：支持上下箭头、Tab、Enter 选择命令
+
+**支持的命令**
+- `md5` / `sha1` / `sha256` / `sha512` - 哈希计算
+- `base64` / `b64` - Base64 编码
+- `base64d` / `b64d` - Base64 解码
+- `urlencode` / `url` / `ue` - URL 编码
+- `urldecode` / `ud` - URL 解码
+- `timestamp` / `ts` - 时间戳转日期
+- `date` - 日期转时间戳
+
+**快捷键自定义**
+- ⚙️ 设置界面：支持自定义快速搜索快捷键
+- 💾 设置持久化：快捷键配置自动保存
+- 🔄 一键重置：支持恢复默认快捷键
+
+**菜单栏图标（Tray Icon）**
+- 📌 菜单栏常驻：应用图标显示在 macOS 菜单栏右侧
+- 🖱️ 快速访问：点击图标显示/隐藏主窗口
+- 📋 右键菜单：快速搜索、关于、退出等功能
+
+#### 🐛 问题修复
+
+- 修复 macOS 安装问题（DMG 拖拽安装）
+- 修复退出功能不生效的问题
+- 修复使用快捷弹窗后无法通过 Dock 图标打开主窗口的问题
+- 优化窗口关闭行为（macOS 上关闭窗口隐藏到菜单栏）
+
+#### 🎨 界面优化
+
+- 更新应用图标（DevTools.icns）
+- 优化快速搜索弹窗 UI
+- 改进命令提示显示效果
+
+#### 📝 文档更新
+
+- 添加安装说明文档（INSTALL.md）
+- 添加 macOS 菜单栏显示条件说明（MENUBAR.md）
+- 更新 Electron 快速开始指南
 
 ### v0.1.1
 - 添加 favicon 支持

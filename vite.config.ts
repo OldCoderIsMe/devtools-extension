@@ -17,6 +17,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         popup: resolve(__dirname, 'index.html'),
+        'quick-search': resolve(__dirname, 'quick-search.html'),
       },
       output: {
         entryFileNames: `assets/[name].js`,
