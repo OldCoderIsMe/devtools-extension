@@ -302,7 +302,28 @@ onUnmounted(() => {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
+  overflow-x: hidden;
   min-height: 200px;
+  max-height: calc(100vh - 200px);
+}
+
+/* 自定义滚动条样式 */
+.quick-search-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.quick-search-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.quick-search-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.quick-search-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .quick-search-hint {
