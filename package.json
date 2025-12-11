@@ -61,10 +61,11 @@
         }
       ],
       "icon": "icons/icon.icns",
-      "hardenedRuntime": true,
+      "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "entitlements": "electron/entitlements.mac.plist",
       "entitlementsInherit": "electron/entitlements.mac.plist",
+      "identity": null,
       "extendInfo": {
         "CFBundleIconFile": "icon.icns"
       }
