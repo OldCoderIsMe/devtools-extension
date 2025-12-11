@@ -1,6 +1,7 @@
 {
   "name": "devtools-extension",
   "version": "0.1.2",
+  "description": "功能丰富的开发工具集合，支持 Chrome 扩展、网页应用和 macOS 桌面应用。包含 URL 编码、加密哈希、时间戳转换、JSON 格式化、文本处理、UUID 生成、正则测试、二维码生成、文本对比等 9 大工具。所有计算本地完成，保护隐私安全。支持快速搜索弹窗和快捷键自定义。",
   "private": false,
   "main": "electron/main.js",
   "scripts": {
