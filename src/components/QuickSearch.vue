@@ -301,8 +301,9 @@ onUnmounted(() => {
 }
 
 .quick-search-input:focus {
-  border-color: rgba(100, 150, 255, 0.5);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(100, 150, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 2px rgba(100, 150, 255, 0.2);
 }
 
 .quick-search-input::placeholder {
@@ -358,11 +359,12 @@ onUnmounted(() => {
 
 .hint-item {
   display: flex;
-  align-items: center;
-  gap: 24px;
+  align-items: flex-start;
+  gap: 32px;
   padding: 10px 8px;
   border-radius: 6px;
   transition: background 0.2s;
+  cursor: pointer;
 }
 
 .hint-item:hover {
@@ -373,7 +375,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 120px;
+  min-width: 140px;
   flex-shrink: 0;
 }
 
@@ -382,6 +384,7 @@ onUnmounted(() => {
   font-size: 13px;
   color: #64b5f6;
   font-weight: 600;
+  line-height: 1.4;
 }
 
 .hint-aliases {
@@ -389,6 +392,7 @@ onUnmounted(() => {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
   font-style: italic;
+  line-height: 1.4;
 }
 
 .hint-desc {
@@ -396,6 +400,8 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.7);
   flex: 1;
   min-width: 0;
+  line-height: 1.4;
+  padding-top: 2px;
 }
 
 .quick-search-result {

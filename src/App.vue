@@ -96,9 +96,9 @@
   import JsonTool from './tools/JsonTool.vue';
   import TextTool from './tools/TextTool.vue';
   import UuidTool from './tools/UuidTool.vue';
-import RegexTool from './tools/RegexTool.vue';
-import QrcodeTool from './tools/QrcodeTool.vue';
-import DiffTool from './tools/DiffTool.vue';
+  import RegexTool from './tools/RegexTool.vue';
+  import QrcodeTool from './tools/QrcodeTool.vue';
+  import DiffTool from './tools/DiffTool.vue';
 import SettingsPanel from './components/SettingsPanel.vue';
   
   interface ToolMeta {
