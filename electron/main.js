@@ -1,5 +1,6 @@
-const { app, BrowserWindow, Menu, shell, screen } = require('electron');
+const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain } = require('electron');
 const path = require('path');
+const settings = require('./settings');
 
 // 检测开发模式
 const isDev = process.env.NODE_ENV === 'development' || 
@@ -7,6 +8,7 @@ const isDev = process.env.NODE_ENV === 'development' ||
               !app.isPackaged;
 
 let mainWindow;
+let quickSearchWindow = null;
 
 function createWindow() {
   // Electron 客户端：获取主显示器的尺寸，撑满窗口
@@ -147,6 +149,154 @@ function createWindow() {
   });
 }
 
+// 创建快速搜索弹窗
+function createQuickSearchWindow() {
+  // 如果窗口已存在，直接显示并聚焦
+  if (quickSearchWindow) {
+    quickSearchWindow.show();
+    quickSearchWindow.focus();
+    return;
+  }
+
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+  
+  // 创建一个居中的小窗口
+  const windowWidth = 600;
+  const windowHeight = 400;
+  const x = Math.floor((width - windowWidth) / 2);
+  const y = Math.floor((height - windowHeight) / 2);
+
+  quickSearchWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x: x,
+    y: y,
+    frame: false, // 无边框窗口
+    transparent: true, // 透明背景，用于圆角效果
+    backgroundColor: '#00000000', // 透明
+    resizable: false,
+    alwaysOnTop: true, // 始终置顶
+    skipTaskbar: true, // 不在任务栏显示
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      enableRemoteModule: false,
+      preload: path.join(__dirname, 'preload.js'),
+      webSecurity: true,
+    },
+    show: false,
+  });
+
+  // 加载快速搜索页面
+  if (isDev) {
+    const port = process.env.VITE_PORT || process.env.PORT || 5173;
+    quickSearchWindow.loadURL(`http://localhost:${port}/quick-search.html`);
+  } else {
+    const quickSearchPath = path.join(__dirname, '../dist/quick-search.html');
+    quickSearchWindow.loadFile(quickSearchPath);
+  }
+
+  // 窗口准备好后显示
+  quickSearchWindow.once('ready-to-show', () => {
+    quickSearchWindow.show();
+    quickSearchWindow.focus();
+  });
+
+  // 窗口关闭时清理引用
+  quickSearchWindow.on('closed', () => {
+    quickSearchWindow = null;
+  });
+
+  // 失去焦点时隐藏窗口（类似 Spotlight）
+  quickSearchWindow.on('blur', () => {
+    if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
+      quickSearchWindow.hide();
+    }
+  });
+}
+
+// 注册的快捷键列表（用于注销）
+let registeredShortcuts = [];
+
+// 注册全局快捷键
+function registerGlobalShortcuts() {
+  // 先注销所有已注册的快捷键
+  registeredShortcuts.forEach(shortcut => {
+    globalShortcut.unregister(shortcut);
+  });
+  registeredShortcuts = [];
+
+  // 从设置中读取快捷键
+  const shortcut1 = settings.getShortcut('quickSearch');
+  const shortcut2 = settings.getShortcut('quickSearchAlt');
+
+  // 注册主快捷键
+  if (shortcut1) {
+    const ret1 = globalShortcut.register(shortcut1, () => {
+      createQuickSearchWindow();
+    });
+    if (ret1) {
+      registeredShortcuts.push(shortcut1);
+      console.log(`[Electron] 全局快捷键已注册: ${shortcut1}`);
+    } else {
+      console.log(`[Electron] 全局快捷键注册失败: ${shortcut1} (可能已被占用)`);
+    }
+  }
+
+  // 注册备用快捷键
+  if (shortcut2 && shortcut2 !== shortcut1) {
+    const ret2 = globalShortcut.register(shortcut2, () => {
+      createQuickSearchWindow();
+    });
+    if (ret2) {
+      registeredShortcuts.push(shortcut2);
+      console.log(`[Electron] 备用全局快捷键已注册: ${shortcut2}`);
+    } else {
+      console.log(`[Electron] 备用全局快捷键注册失败: ${shortcut2} (可能已被占用)`);
+    }
+  }
+}
+
+// 注册 IPC 处理器
+function registerIpcHandlers() {
+  // 关闭快速搜索窗口
+  ipcMain.handle('quick-search:close', () => {
+    if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
+      quickSearchWindow.hide();
+    }
+  });
+
+  // 获取窗口是否可见
+  ipcMain.handle('quick-search:isVisible', () => {
+    return quickSearchWindow && !quickSearchWindow.isDestroyed() && quickSearchWindow.isVisible();
+  });
+
+  // 获取快捷键设置
+  ipcMain.handle('settings:getShortcuts', () => {
+    const settingsData = settings.loadSettings();
+    return settingsData.shortcuts || settings.DEFAULT_SETTINGS.shortcuts;
+  });
+
+  // 更新快捷键设置
+  ipcMain.handle('settings:updateShortcut', async (event, key, value) => {
+    const success = settings.updateShortcut(key, value);
+    if (success) {
+      // 重新注册快捷键
+      registerGlobalShortcuts();
+    }
+    return success;
+  });
+
+  // 重置快捷键为默认值
+  ipcMain.handle('settings:resetShortcuts', () => {
+    const defaultSettings = settings.DEFAULT_SETTINGS;
+    settings.saveSettings(defaultSettings);
+    registerGlobalShortcuts();
+    return defaultSettings.shortcuts;
+  });
+}
+
 // 创建应用菜单（macOS）
 function createMenu() {
   const template = [
@@ -218,6 +368,10 @@ function createMenu() {
 app.whenReady().then(() => {
   createWindow();
   createMenu();
+  registerIpcHandlers();
+  
+  // 注册全局快捷键（从设置中读取）
+  registerGlobalShortcuts();
 
   app.on('activate', () => {
     // 在 macOS 上，当单击 dock 图标并且没有其他窗口打开时，
@@ -226,6 +380,11 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
+});
+
+// 应用退出时注销所有全局快捷键
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });
 
 // 当所有窗口关闭时退出应用（macOS 除外）

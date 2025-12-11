@@ -32,6 +32,9 @@
               <div class="developer-toggle" @click="showDeveloperInfo = true" title="开发者信息">
                 <span>👤</span>
               </div>
+              <div v-if="isElectron" class="settings-toggle" @click="showSettings = true" title="设置">
+                <span>⚙️</span>
+              </div>
             </div>
           </div>
           <ul class="tool-list">
@@ -48,9 +51,9 @@
         </aside>
     
         <main class="main">
-          <component v-if="!showDeveloperInfo" :is="activeToolComponent" />
+          <component v-if="!showDeveloperInfo && !showSettings" :is="activeToolComponent" />
           <!-- 开发者信息页面 -->
-          <div v-else class="developer-info-page">
+          <div v-else-if="showDeveloperInfo" class="developer-info-page">
             <div class="developer-info-card">
               <h2 class="developer-info-title">👤 开发者信息</h2>
               <div class="developer-info-content">
@@ -69,6 +72,10 @@
               </div>
               <button class="btn" @click="showDeveloperInfo = false" style="margin-top: 20px;">关闭</button>
             </div>
+          </div>
+          <!-- 设置页面 -->
+          <div v-else-if="showSettings" class="settings-page">
+            <SettingsPanel @close="showSettings = false" />
           </div>
         </main>
       </div>
@@ -89,9 +96,10 @@
   import JsonTool from './tools/JsonTool.vue';
   import TextTool from './tools/TextTool.vue';
   import UuidTool from './tools/UuidTool.vue';
-  import RegexTool from './tools/RegexTool.vue';
-  import QrcodeTool from './tools/QrcodeTool.vue';
-  import DiffTool from './tools/DiffTool.vue';
+import RegexTool from './tools/RegexTool.vue';
+import QrcodeTool from './tools/QrcodeTool.vue';
+import DiffTool from './tools/DiffTool.vue';
+import SettingsPanel from './components/SettingsPanel.vue';
   
   interface ToolMeta {
     id: string;
@@ -121,11 +129,15 @@
   // 开发者信息显示状态
   const showDeveloperInfo = ref(false);
   
+  // 设置面板显示状态
+  const showSettings = ref(false);
+  
   // 选择工具
   function selectTool(toolId: string) {
     activeToolId.value = toolId;
-    // 点击工具项时，自动关闭开发者信息页面
+    // 点击工具项时，自动关闭开发者信息页面和设置面板
     showDeveloperInfo.value = false;
+    showSettings.value = false;
   }
   
   // 检测是否在 Electron 环境中
