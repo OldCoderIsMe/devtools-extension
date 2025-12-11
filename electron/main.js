@@ -10,6 +10,7 @@ const isDev = process.env.NODE_ENV === 'development' ||
 let mainWindow;
 let quickSearchWindow = null;
 let tray = null;
+let isQuitting = false; // 标记是否正在退出应用
 
 function createWindow() {
   // Electron 客户端：获取主显示器的尺寸，撑满窗口
@@ -147,8 +148,14 @@ function createWindow() {
 
   // 当窗口关闭时（macOS 上不真正关闭，而是隐藏）
   mainWindow.on('close', (event) => {
+    // 如果正在退出应用，允许关闭
+    if (isQuitting) {
+      mainWindow = null;
+      return;
+    }
+    
     if (process.platform === 'darwin') {
-      // macOS: 隐藏窗口而不是关闭
+      // macOS: 隐藏窗口而不是关闭（除非是退出）
       event.preventDefault();
       mainWindow.hide();
     } else {
