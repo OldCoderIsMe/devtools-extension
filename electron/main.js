@@ -17,8 +17,15 @@ function createWindow() {
   const { width, height } = primaryDisplay.workAreaSize;
   
   // 创建浏览器窗口
-  const iconPath = path.join(__dirname, '../icons/icon.icns');
-  const iconExists = require('fs').existsSync(iconPath);
+  // 优先使用新的 Dock 图标
+  let iconPath = path.join(__dirname, 'DevToolsDock.icns');
+  let iconExists = require('fs').existsSync(iconPath);
+  
+  // 如果没有找到，使用默认图标
+  if (!iconExists) {
+    iconPath = path.join(__dirname, '../icons/icon.icns');
+    iconExists = require('fs').existsSync(iconPath);
+  }
   
   const windowOptions = {
     width: width,
