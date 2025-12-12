@@ -45,6 +45,14 @@
 
 **快速开始 macOS 应用**：查看 [ELECTRON_QUICKSTART.md](./docs/ELECTRON_QUICKSTART.md)
 
+#### 系统要求
+- **最低系统版本**：macOS 10.13 (High Sierra) 或更高版本
+- **推荐系统版本**：macOS 11.0 (Big Sur) 或更高版本（获得最佳体验）
+- **架构支持**：
+  - Intel (x64)
+  - Apple Silicon (arm64)：M1/M2/M3 芯片
+- **权限要求**：需要授予全局快捷键权限（用于快速搜索功能）
+
 ## 功能列表
 
 | 工具 | 功能描述 |

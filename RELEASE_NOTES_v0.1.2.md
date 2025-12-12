@@ -70,8 +70,23 @@
 ## 📦 下载方式
 
 ### macOS 桌面客户端
+
+#### 系统要求
+- **最低系统版本**：macOS 10.13 (High Sierra) 或更高版本
+- **推荐系统版本**：macOS 11.0 (Big Sur) 或更高版本（获得最佳体验）
+- **架构支持**：
+  - Intel (x64)
+  - Apple Silicon (arm64)：M1/M2/M3 芯片
+- **权限要求**：需要授予全局快捷键权限（首次使用时系统会提示）
+
+#### 安装方式
 - 下载 DMG 文件，拖拽到 Applications 文件夹即可安装
-- 支持 Intel 和 Apple Silicon（M1/M2/M3）芯片
+- 详细安装说明请查看 [INSTALL.md](./INSTALL.md)
+
+#### 已知限制
+- **代码签名**：应用未进行代码签名，首次运行可能需要手动允许（右键点击应用 → 选择"打开"）
+- **macOS 10.13-10.15**：部分视觉效果（如毛玻璃效果）可能受限
+- **macOS 11+**：完整功能支持，推荐使用
 
 ### Chrome 浏览器扩展
 - [Chrome 应用商店安装](https://chromewebstore.google.com/detail/devtools-suite/fjebaljoclgdamiognofbdjplmbgkpil?authuser=0&hl=zh-CN)（推荐）
