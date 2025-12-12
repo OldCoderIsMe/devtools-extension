@@ -135,11 +135,26 @@ devtools-extension/
 └── electron/         # Electron 配置
 ```
 
+## 系统要求
+
+### macOS 桌面客户端
+- **最低系统版本**：macOS 10.13 (High Sierra) 或更高版本
+- **推荐系统版本**：macOS 11.0 (Big Sur) 或更高版本
+- **架构支持**：Intel (x64) 和 Apple Silicon (arm64)
+- **权限要求**：需要授予全局快捷键权限（首次使用时系统会提示）
+
+### Chrome 浏览器扩展
+- Chrome 浏览器 88+ 或基于 Chromium 的浏览器（Edge、Brave 等）
+
+### 网页应用
+- 现代浏览器（Chrome、Firefox、Safari、Edge 等）
+
 ## 注意事项
 
 1. **隐私安全**：所有计算都在本地浏览器中完成，不会上传任何数据到服务器
 2. **数据存储**：扩展使用 Chrome Storage API，数据仅存储在本地
 3. **权限说明**：扩展只需要 `storage` 权限，用于本地数据存储
+4. **macOS 安全限制**：由于应用未进行代码签名，首次运行时可能需要手动允许（详见 [INSTALL.md](./INSTALL.md)）
 
 ## 版本历史
 
