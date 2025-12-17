@@ -75,10 +75,12 @@
       "title": "${productName} ${version}",
       "icon": "icons/icon.icns",
       "background": null,
+      "sign": false,
       "contents": [
         {
           "x": 130,
-          "y": 220
+          "y": 220,
+          "type": "file"
         },
         {
           "x": 410,
