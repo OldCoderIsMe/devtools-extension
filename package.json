@@ -12,7 +12,7 @@
     "package": "npm run build && node package-extension.js",
     "electron:dev": "concurrently \"npm run dev\" \"node wait-for-vite.js\"",
     "electron:build": "ELECTRON=1 npm run build && electron-builder",
-    "electron:build:mac": "ELECTRON=1 npm run build && electron-builder --mac",
+    "electron:build:mac": "ELECTRON=1 npm run build && node clean-dmg-mounts.js && electron-builder --mac",
     "electron:pack": "npm run build && electron-builder --dir"
   },
   "dependencies": {
@@ -74,10 +74,13 @@
     "dmg": {
       "title": "${productName} ${version}",
       "icon": "icons/icon.icns",
+      "background": null,
+      "sign": false,
       "contents": [
         {
           "x": 130,
-          "y": 220
+          "y": 220,
+          "type": "file"
         },
         {
           "x": 410,

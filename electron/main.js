@@ -156,6 +156,7 @@ function createWindow() {
   mainWindow.on('close', (event) => {
     // 如果正在退出应用，允许关闭
     if (isQuitting) {
+      // 清理引用，允许窗口关闭
       mainWindow = null;
       return;
     }
@@ -421,6 +422,13 @@ function createTray() {
       label: '退出',
       click: () => {
         isQuitting = true;
+        // 关闭所有窗口
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.destroy();
+        }
+        if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
+          quickSearchWindow.destroy();
+        }
         app.quit();
       },
     },
@@ -466,8 +474,16 @@ function createMenu() {
         { 
           role: 'quit', 
           label: '退出 ' + app.getName(),
+          accelerator: 'Command+Q',
           click: () => {
             isQuitting = true;
+            // 关闭所有窗口
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.destroy();
+            }
+            if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
+              quickSearchWindow.destroy();
+            }
             app.quit();
           },
         },
@@ -550,6 +566,14 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
+});
+
+// 监听退出前事件，确保 isQuitting 被设置
+app.on('before-quit', (event) => {
+  // 如果 isQuitting 为 false，说明是用户主动退出（Dock 右键菜单或 Cmd+Q）
+  if (!isQuitting) {
+    isQuitting = true;
+  }
 });
 
 // 应用退出时注销所有全局快捷键
