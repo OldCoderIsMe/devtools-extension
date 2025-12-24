@@ -45,14 +45,38 @@
         <button class="btn secondary" @click="copyOutput" :disabled="!output">
           复制结果
         </button>
+        <button 
+          v-if="output" 
+          class="btn secondary" 
+          @click="showExpanded = true"
+          title="放大显示"
+        >
+          放大显示
+        </button>
         <span v-if="message" class="hint">{{ message }}</span>
+      </div>
+    </div>
+
+    <!-- 放大显示模态框 -->
+    <div v-if="showExpanded" class="json-expanded-modal" @click.self="showExpanded = false">
+      <div class="json-expanded-content">
+        <div class="json-expanded-header">
+          <h3>JSON 格式化结果</h3>
+          <div class="json-expanded-actions">
+            <button class="btn secondary" @click="copyOutputInModal">复制</button>
+            <button class="btn secondary" @click="showExpanded = false">关闭</button>
+          </div>
+        </div>
+        <div class="json-expanded-body">
+          <pre class="json-expanded-text">{{ output }}</pre>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import {
   formatJson,
   compressJson,
@@ -68,6 +92,22 @@ const input = ref('');
 const output = ref('');
 const message = ref('');
 const validationResult = ref<{ valid: boolean; error?: string } | null>(null);
+const showExpanded = ref(false);
+
+// ESC 键关闭模态框
+function handleEscapeKey(event: KeyboardEvent) {
+  if (event.key === 'Escape' && showExpanded.value) {
+    showExpanded.value = false;
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleEscapeKey);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscapeKey);
+});
 
 function handleProcess() {
   message.value = '';
@@ -114,6 +154,20 @@ async function copyOutput() {
   try {
     await navigator.clipboard.writeText(output.value);
     message.value = '已复制到剪贴板';
+  } catch {
+    message.value = '复制失败，请手动复制';
+  }
+}
+
+async function copyOutputInModal() {
+  if (!output.value) return;
+  try {
+    await navigator.clipboard.writeText(output.value);
+    message.value = '已复制到剪贴板';
+    // 短暂延迟后关闭提示
+    setTimeout(() => {
+      message.value = '';
+    }, 2000);
   } catch {
     message.value = '复制失败，请手动复制';
   }
