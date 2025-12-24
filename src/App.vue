@@ -99,6 +99,7 @@
   import RegexTool from './tools/RegexTool.vue';
   import QrcodeTool from './tools/QrcodeTool.vue';
   import DiffTool from './tools/DiffTool.vue';
+  import UnicodeTool from './tools/UnicodeTool.vue';
 import SettingsPanel from './components/SettingsPanel.vue';
   
   interface ToolMeta {
@@ -114,6 +115,7 @@ import SettingsPanel from './components/SettingsPanel.vue';
     { id: 'time', name: '时间戳转换', emoji: '⏰', component: markRaw(TimestampTool) },
     { id: 'json', name: 'JSON 格式化', emoji: '📄', component: markRaw(JsonTool) },
     { id: 'text', name: '文本处理', emoji: '📝', component: markRaw(TextTool) },
+    { id: 'unicode', name: 'Unicode 转换', emoji: '🔤', component: markRaw(UnicodeTool) },
     { id: 'uuid', name: 'UUID/随机字符串', emoji: '🆔', component: markRaw(UuidTool) },
     { id: 'regex', name: '正则表达式', emoji: '🔍', component: markRaw(RegexTool) },
     { id: 'qrcode', name: '二维码生成', emoji: '📱', component: markRaw(QrcodeTool) },

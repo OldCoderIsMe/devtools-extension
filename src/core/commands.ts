@@ -66,6 +66,18 @@ export const AVAILABLE_COMMANDS: CommandInfo[] = [
     description: '日期转时间戳',
     example: 'date 2021-01-01 00:00:00',
   },
+  {
+    name: 'unicode',
+    aliases: ['uni', 'u2c'],
+    description: 'Unicode 转中文',
+    example: 'unicode \\u4e2d\\u6587',
+  },
+  {
+    name: 'uniencode',
+    aliases: ['c2u', 'uni2'],
+    description: '中文转 Unicode',
+    example: 'uniencode 中文',
+  },
 ];
 
 // 获取所有命令和别名的搜索关键词

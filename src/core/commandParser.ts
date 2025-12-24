@@ -8,6 +8,7 @@ import {
 } from './hash';
 import { urlEncode, urlDecode } from './url';
 import { timestampToLocalString, dateStringToTimestamp } from './time';
+import { unicodeToChinese, chineseToUnicode } from './unicode';
 
 export interface CommandResult {
   success: boolean;
@@ -94,10 +95,34 @@ export function parseAndExecuteCommand(input: string): CommandResult {
         const timestamp = dateStringToTimestamp(args);
         return { success: true, output: timestamp.toString() };
 
+      case 'unicode':
+      case 'uni':
+      case 'u2c':
+        if (!args) {
+          return { success: false, error: '请输入 Unicode 编码，例如: \\u4e2d\\u6587' };
+        }
+        try {
+          return { success: true, output: unicodeToChinese(args) };
+        } catch (e: any) {
+          return { success: false, error: e.message || 'Unicode 解码失败' };
+        }
+
+      case 'uniencode':
+      case 'c2u':
+      case 'uni2':
+        if (!args) {
+          return { success: false, error: '请输入中文字符' };
+        }
+        try {
+          return { success: true, output: chineseToUnicode(args, 'slash') };
+        } catch (e: any) {
+          return { success: false, error: e.message || 'Unicode 编码失败' };
+        }
+
       default:
         return {
           success: false,
-          error: `未知命令: ${command}。支持的命令: md5, sha1, sha256, sha512, base64, base64d, urlencode, urldecode, timestamp, date`,
+          error: `未知命令: ${command}。支持的命令: md5, sha1, sha256, sha512, base64, base64d, urlencode, urldecode, timestamp, date, unicode, uniencode`,
         };
     }
   } catch (e: any) {
