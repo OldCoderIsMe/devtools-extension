@@ -1,6 +1,7 @@
-const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain, Tray, nativeImage } = require('electron');
+const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain, Tray, nativeImage, dialog } = require('electron');
 const path = require('path');
 const settings = require('./settings');
+const fileOperations = require('./fileOperations');
 
 // 检测开发模式
 const isDev = process.env.NODE_ENV === 'development' || 
@@ -334,6 +335,139 @@ function registerIpcHandlers() {
     registerGlobalShortcuts();
     return defaultSettings.shortcuts;
   });
+
+  // 文件移动相关 IPC
+  // 获取文件移动配对列表
+  ipcMain.handle('file-move:getPairs', () => {
+    return settings.getFileMovePairs();
+  });
+
+  // 添加文件移动配对
+  ipcMain.handle('file-move:addPair', async (event, pair) => {
+    try {
+      // 验证路径
+      fileOperations.validatePath(pair.sourcePath);
+      fileOperations.validatePath(pair.targetPath);
+      settings.addFileMovePair(pair);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  // 更新文件移动配对
+  ipcMain.handle('file-move:updatePair', async (event, alias, pair) => {
+    try {
+      if (pair.sourcePath) {
+        fileOperations.validatePath(pair.sourcePath);
+      }
+      if (pair.targetPath) {
+        fileOperations.validatePath(pair.targetPath);
+      }
+      settings.updateFileMovePair(alias, pair);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  // 删除文件移动配对
+  ipcMain.handle('file-move:deletePair', async (event, alias) => {
+    try {
+      settings.deleteFileMovePair(alias);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  // 执行文件移动操作
+  ipcMain.handle('file-move:execute', async (event, alias, force = false) => {
+    try {
+      const pairs = settings.getFileMovePairs();
+      const pair = pairs.find(p => p.alias === alias);
+      
+      if (!pair) {
+        return { success: false, error: `别名 "${alias}" 不存在` };
+      }
+
+      // 验证路径
+      const sourcePath = fileOperations.validatePath(pair.sourcePath);
+      const targetPath = fileOperations.validatePath(pair.targetPath);
+
+      // 检查路径是否存在
+      try {
+        await require('fs').promises.stat(sourcePath);
+      } catch (error) {
+        return { success: false, error: `源目录不存在: ${sourcePath}` };
+      }
+
+      // 执行文件移动操作
+      const result = await fileOperations.executeFileMove(sourcePath, targetPath);
+      return result;
+    } catch (error) {
+      return { success: false, error: error.message || '文件操作失败' };
+    }
+  });
+
+  // 选择目录对话框
+  ipcMain.handle('file-move:selectDirectory', async (event, title = '选择目录') => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title,
+      properties: ['openDirectory'],
+    });
+    
+    if (result.canceled) {
+      return { canceled: true };
+    }
+    
+    return { canceled: false, path: result.filePaths[0] };
+  });
+
+  // 列出目录下的文件
+  ipcMain.handle('file-move:listFiles', async (event, dirPath) => {
+    try {
+      const validatedPath = fileOperations.validatePath(dirPath);
+      const files = await listDirectoryFiles(validatedPath);
+      return { success: true, files };
+    } catch (error) {
+      return { success: false, error: error.message || '列出文件失败' };
+    }
+  });
+}
+
+// 列出目录下的文件（递归）
+async function listDirectoryFiles(dirPath) {
+  const fs = require('fs').promises;
+  const path = require('path');
+  const files = [];
+
+  async function traverse(currentPath, relativePath = '') {
+    try {
+      const entries = await fs.readdir(currentPath, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(currentPath, entry.name);
+        const relativeFilePath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
+        
+        if (entry.isDirectory()) {
+          files.push(`${relativeFilePath}/`);
+          // 递归遍历子目录（限制深度，避免过多文件）
+          if (relativePath.split('/').length < 5) {
+            await traverse(fullPath, relativeFilePath);
+          }
+        } else {
+          files.push(relativeFilePath);
+        }
+      }
+    } catch (error) {
+      // 忽略无法访问的目录
+      console.warn(`无法访问目录: ${currentPath}`, error.message);
+    }
+  }
+
+  await traverse(dirPath);
+  return files.sort();
 }
 
 // 创建菜单栏图标（Tray）

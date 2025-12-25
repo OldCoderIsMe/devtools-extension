@@ -19,4 +19,14 @@ contextBridge.exposeInMainWorld('electron', {
     updateShortcut: (key, value) => ipcRenderer.invoke('settings:updateShortcut', key, value),
     resetShortcuts: () => ipcRenderer.invoke('settings:resetShortcuts'),
   },
+  // 文件移动相关 IPC（仅 Electron 环境）
+  fileMove: {
+    getPairs: () => ipcRenderer.invoke('file-move:getPairs'),
+    addPair: (pair) => ipcRenderer.invoke('file-move:addPair', pair),
+    updatePair: (alias, pair) => ipcRenderer.invoke('file-move:updatePair', alias, pair),
+    deletePair: (alias) => ipcRenderer.invoke('file-move:deletePair', alias),
+    execute: (alias, force) => ipcRenderer.invoke('file-move:execute', alias, force),
+    selectDirectory: (title) => ipcRenderer.invoke('file-move:selectDirectory', title),
+    listFiles: (dirPath) => ipcRenderer.invoke('file-move:listFiles', dirPath),
+  },
 });

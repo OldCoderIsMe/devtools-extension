@@ -113,7 +113,11 @@ watch(input, () => {
     suggestions.value = [];
     // 如果有输入且不是显示建议状态，执行命令
     if (trimmed) {
-      result.value = parseAndExecuteCommand(trimmed);
+      parseAndExecuteCommand(trimmed).then(res => {
+        result.value = res;
+      }).catch(err => {
+        result.value = { success: false, error: err.message || '执行命令失败' };
+      });
     } else {
       result.value = null;
     }

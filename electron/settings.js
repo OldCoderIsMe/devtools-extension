@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS = {
     quickSearch: process.platform === 'darwin' ? 'Command+K' : 'Control+K',
     quickSearchAlt: process.platform === 'darwin' ? 'Command+Space' : 'Control+Space',
   },
+  fileMovePairs: [], // 文件移动路径配对配置
 };
 
 // 读取设置
@@ -67,10 +68,63 @@ function getShortcut(key) {
   return settings.shortcuts?.[key] || DEFAULT_SETTINGS.shortcuts[key];
 }
 
+// 获取文件移动配对配置
+function getFileMovePairs() {
+  const settings = loadSettings();
+  return settings.fileMovePairs || [];
+}
+
+// 添加文件移动配对
+function addFileMovePair(pair) {
+  const settings = loadSettings();
+  if (!settings.fileMovePairs) {
+    settings.fileMovePairs = [];
+  }
+  // 检查别名是否已存在
+  const exists = settings.fileMovePairs.find(p => p.alias === pair.alias);
+  if (exists) {
+    throw new Error(`别名 "${pair.alias}" 已存在`);
+  }
+  settings.fileMovePairs.push(pair);
+  return saveSettings(settings);
+}
+
+// 更新文件移动配对
+function updateFileMovePair(alias, pair) {
+  const settings = loadSettings();
+  if (!settings.fileMovePairs) {
+    settings.fileMovePairs = [];
+  }
+  const index = settings.fileMovePairs.findIndex(p => p.alias === alias);
+  if (index === -1) {
+    throw new Error(`别名 "${alias}" 不存在`);
+  }
+  settings.fileMovePairs[index] = { ...settings.fileMovePairs[index], ...pair };
+  return saveSettings(settings);
+}
+
+// 删除文件移动配对
+function deleteFileMovePair(alias) {
+  const settings = loadSettings();
+  if (!settings.fileMovePairs) {
+    settings.fileMovePairs = [];
+  }
+  const index = settings.fileMovePairs.findIndex(p => p.alias === alias);
+  if (index === -1) {
+    throw new Error(`别名 "${alias}" 不存在`);
+  }
+  settings.fileMovePairs.splice(index, 1);
+  return saveSettings(settings);
+}
+
 module.exports = {
   loadSettings,
   saveSettings,
   updateShortcut,
   getShortcut,
+  getFileMovePairs,
+  addFileMovePair,
+  updateFileMovePair,
+  deleteFileMovePair,
   DEFAULT_SETTINGS,
 };
