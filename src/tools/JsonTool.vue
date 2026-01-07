@@ -58,8 +58,8 @@
     </div>
 
     <!-- 放大显示模态框 -->
-    <div v-if="showExpanded" class="json-expanded-modal" @click.self="showExpanded = false">
-      <div class="json-expanded-content">
+    <div v-if="showExpanded" class="json-expanded-modal" @click="handleModalClick">
+      <div class="json-expanded-content" @click.stop :style="{ width: modalContentWidth }">
         <div class="json-expanded-header">
           <h3>JSON 格式化结果</h3>
           <div class="json-expanded-actions">
@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import {
   formatJson,
   compressJson,
@@ -93,6 +93,7 @@ const output = ref('');
 const message = ref('');
 const validationResult = ref<{ valid: boolean; error?: string } | null>(null);
 const showExpanded = ref(false);
+const modalContentWidth = ref<string>('90%');
 
 // ESC 键关闭模态框
 function handleEscapeKey(event: KeyboardEvent) {
@@ -100,6 +101,47 @@ function handleEscapeKey(event: KeyboardEvent) {
     showExpanded.value = false;
   }
 }
+
+// 点击模态框外部区域关闭
+function handleModalClick(event: MouseEvent) {
+  // 如果点击的是模态框背景（不是内容区域），则关闭
+  if (event.target === event.currentTarget) {
+    showExpanded.value = false;
+  }
+}
+
+// 计算主编辑区域的宽度
+function calculateMainWidth() {
+  const mainElement = document.querySelector('.main');
+  if (mainElement) {
+    const rect = mainElement.getBoundingClientRect();
+    // 减去主区域的 padding (左右各 16px)
+    const width = rect.width - 32;
+    modalContentWidth.value = `${width}px`;
+  } else {
+    modalContentWidth.value = '90%';
+  }
+}
+
+// 监听窗口大小变化
+function handleResize() {
+  if (showExpanded.value) {
+    calculateMainWidth();
+  }
+}
+
+// 当显示弹出框时，计算宽度
+watch(showExpanded, (newVal: boolean) => {
+  if (newVal) {
+    // 使用 setTimeout 确保 DOM 已更新
+    setTimeout(() => {
+      calculateMainWidth();
+    }, 0);
+    window.addEventListener('resize', handleResize);
+  } else {
+    window.removeEventListener('resize', handleResize);
+  }
+});
 
 onMounted(() => {
   window.addEventListener('keydown', handleEscapeKey);

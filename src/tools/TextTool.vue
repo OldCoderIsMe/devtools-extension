@@ -10,6 +10,7 @@
       <option value="lowercase">转小写</option>
       <option value="titlecase">首字母大写</option>
       <option value="camelcase">驼峰命名</option>
+      <option value="removeSpecialChars">剔除特殊字符</option>
       <option value="stats">文本统计</option>
     </select>
 
@@ -18,6 +19,38 @@
         <input type="checkbox" v-model="sortDescending" style="cursor: pointer; accent-color: #3b82f6;" />
         降序排列
       </label>
+    </div>
+
+    <div v-if="operation === 'removeSpecialChars'" style="margin-bottom: 12px;">
+      <label style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; display: block;">
+        选择要剔除的特殊字符类型：
+      </label>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-tertiary); cursor: pointer;">
+          <input type="checkbox" v-model="specialCharTypes" value="emoji" style="cursor: pointer; accent-color: #3b82f6;" />
+          Emoji 表情符号
+        </label>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-tertiary); cursor: pointer;">
+          <input type="checkbox" v-model="specialCharTypes" value="invisible" style="cursor: pointer; accent-color: #3b82f6;" />
+          不可见字符
+        </label>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-tertiary); cursor: pointer;">
+          <input type="checkbox" v-model="specialCharTypes" value="control" style="cursor: pointer; accent-color: #3b82f6;" />
+          控制字符
+        </label>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-tertiary); cursor: pointer;">
+          <input type="checkbox" v-model="specialCharTypes" value="zeroWidth" style="cursor: pointer; accent-color: #3b82f6;" />
+          零宽字符
+        </label>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-tertiary); cursor: pointer;">
+          <input type="checkbox" v-model="specialCharTypes" value="punctuation" style="cursor: pointer; accent-color: #3b82f6;" />
+          标点符号
+        </label>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-tertiary); cursor: pointer;">
+          <input type="checkbox" v-model="specialCharTypes" value="symbols" style="cursor: pointer; accent-color: #3b82f6;" />
+          特殊符号
+        </label>
+      </div>
     </div>
 
     <label class="field-label">输入</label>
@@ -71,7 +104,9 @@ import {
   toTitleCase,
   toCamelCase,
   getTextStats,
+  removeSpecialChars,
   type TextStats,
+  type SpecialCharType,
 } from '@/core/text';
 
 type Operation =
@@ -81,6 +116,7 @@ type Operation =
   | 'lowercase'
   | 'titlecase'
   | 'camelcase'
+  | 'removeSpecialChars'
   | 'stats';
 
 const operation = ref<Operation>('dedupe');
@@ -89,6 +125,7 @@ const output = ref('');
 const message = ref('');
 const sortDescending = ref(false);
 const stats = ref<TextStats | null>(null);
+const specialCharTypes = ref<SpecialCharType[]>(['emoji', 'invisible']);
 
 function handleProcess() {
   message.value = '';
@@ -119,6 +156,13 @@ function handleProcess() {
         break;
       case 'camelcase':
         output.value = toCamelCase(input.value);
+        break;
+      case 'removeSpecialChars':
+        if (specialCharTypes.value.length === 0) {
+          message.value = '请至少选择一种要剔除的特殊字符类型';
+          return;
+        }
+        output.value = removeSpecialChars(input.value, specialCharTypes.value);
         break;
       case 'stats':
         stats.value = getTextStats(input.value);

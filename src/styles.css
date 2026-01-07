@@ -852,10 +852,9 @@ img {
 /* JSON 放大显示模态框 */
 .json-expanded-modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(8px);
   display: flex;
@@ -863,7 +862,10 @@ img {
   justify-content: center;
   z-index: 10000;
   padding: 20px;
+  margin: 0;
+  box-sizing: border-box;
   animation: fadeIn 0.2s ease-out;
+  overflow: auto;
 }
 
 @keyframes fadeIn {
@@ -881,12 +883,12 @@ img {
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   border: 1px solid var(--border-color);
-  width: 90%;
-  max-width: 1200px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
+  margin: auto;
   animation: slideUp 0.3s ease-out;
+  position: relative;
 }
 
 @keyframes slideUp {

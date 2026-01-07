@@ -1,7 +1,19 @@
-const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain, Tray, nativeImage, dialog } = require('electron');
+const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain, Tray, nativeImage, dialog, crashReporter } = require('electron');
 const path = require('path');
 const settings = require('./settings');
 const fileOperations = require('./fileOperations');
+
+// 禁用崩溃报告（避免误报 VSCode 崩溃弹窗）
+if (process.platform === 'darwin') {
+  // macOS: 禁用系统崩溃报告弹窗
+  crashReporter.start({
+    submitURL: '',
+    uploadToServer: false,
+  });
+  
+  // 设置应用名称，避免与 VSCode 混淆
+  app.setName('DevTools Suite');
+}
 
 // 检测开发模式
 const isDev = process.env.NODE_ENV === 'development' || 
@@ -58,7 +70,12 @@ function createWindow() {
     windowOptions.icon = iconPath;
   }
   
-  mainWindow = new BrowserWindow(windowOptions);
+  try {
+    mainWindow = new BrowserWindow(windowOptions);
+  } catch (error) {
+    console.error('[Electron] 创建主窗口失败:', error);
+    return;
+  }
 
   // 加载应用
   if (isDev) {
@@ -202,58 +219,63 @@ function createQuickSearchWindow() {
   const x = Math.floor((width - windowWidth) / 2);
   const y = Math.floor((height - windowHeight) / 2);
 
-  quickSearchWindow = new BrowserWindow({
-    width: windowWidth,
-    height: windowHeight,
-    x: x,
-    y: y,
-    frame: false, // 无边框窗口
-    transparent: true, // 透明背景，用于圆角效果
-    backgroundColor: '#00000000', // 透明
-    resizable: false,
-    alwaysOnTop: true, // 始终置顶
-    skipTaskbar: true, // 不在任务栏显示
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      enableRemoteModule: false,
-      preload: path.join(__dirname, 'preload.js'),
-      webSecurity: true,
-    },
-    show: false,
-  });
+  try {
+    quickSearchWindow = new BrowserWindow({
+      width: windowWidth,
+      height: windowHeight,
+      x: x,
+      y: y,
+      frame: false, // 无边框窗口
+      transparent: true, // 透明背景，用于圆角效果
+      backgroundColor: '#00000000', // 透明
+      resizable: false,
+      alwaysOnTop: true, // 始终置顶
+      skipTaskbar: true, // 不在任务栏显示
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        enableRemoteModule: false,
+        preload: path.join(__dirname, 'preload.js'),
+        webSecurity: true,
+      },
+      show: false,
+    });
 
-  // 加载快速搜索页面
-  if (isDev) {
-    const port = process.env.VITE_PORT || process.env.PORT || 5173;
-    quickSearchWindow.loadURL(`http://localhost:${port}/quick-search.html`);
-  } else {
-    const quickSearchPath = path.join(__dirname, '../dist/quick-search.html');
-    quickSearchWindow.loadFile(quickSearchPath);
-  }
-
-  // 窗口准备好后显示
-  quickSearchWindow.once('ready-to-show', () => {
-    quickSearchWindow.show();
-    quickSearchWindow.focus();
-  });
-
-  // 窗口关闭时清理引用
-  quickSearchWindow.on('closed', () => {
-    quickSearchWindow = null;
-  });
-
-  // 失去焦点时隐藏窗口（类似 Spotlight）
-  quickSearchWindow.on('blur', () => {
-    if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
-      // 延迟隐藏，避免与主窗口显示冲突
-      setTimeout(() => {
-        if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
-          quickSearchWindow.hide();
-        }
-      }, 100);
+    // 加载快速搜索页面
+    if (isDev) {
+      const port = process.env.VITE_PORT || process.env.PORT || 5173;
+      quickSearchWindow.loadURL(`http://localhost:${port}/quick-search.html`);
+    } else {
+      const quickSearchPath = path.join(__dirname, '../dist/quick-search.html');
+      quickSearchWindow.loadFile(quickSearchPath);
     }
-  });
+
+    // 窗口准备好后显示
+    quickSearchWindow.once('ready-to-show', () => {
+      quickSearchWindow.show();
+      quickSearchWindow.focus();
+    });
+
+    // 窗口关闭时清理引用
+    quickSearchWindow.on('closed', () => {
+      quickSearchWindow = null;
+    });
+
+    // 失去焦点时隐藏窗口（类似 Spotlight）
+    quickSearchWindow.on('blur', () => {
+      if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
+        // 延迟隐藏，避免与主窗口显示冲突
+        setTimeout(() => {
+          if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
+            quickSearchWindow.hide();
+          }
+        }, 100);
+      }
+    });
+  } catch (error) {
+    console.error('[Electron] 创建快速搜索窗口失败:', error);
+    quickSearchWindow = null;
+  }
 }
 
 // 注册的快捷键列表（用于注销）
@@ -673,8 +695,29 @@ function createMenu() {
   Menu.setApplicationMenu(menu);
 }
 
+// 全局错误处理：捕获未处理的异常
+process.on('uncaughtException', (error) => {
+  console.error('[Electron] 未捕获的异常:', error);
+  // 不要立即退出，让应用继续运行
+});
+
+// 全局错误处理：捕获未处理的 Promise rejection
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Electron] 未处理的 Promise rejection:', reason);
+  // 不要立即退出，让应用继续运行
+});
+
 // 当 Electron 完成初始化并准备创建浏览器窗口时调用此方法
 app.whenReady().then(() => {
+  // 确保应用名称正确设置（避免与 VSCode 混淆）
+  if (process.platform === 'darwin') {
+    app.setName('DevTools Suite');
+    // 设置应用的用户模型 ID（用于系统识别）
+    if (app.setAsDefaultProtocolClient) {
+      app.setAsDefaultProtocolClient('devtools-suite');
+    }
+  }
+  
   createWindow();
   createMenu();
   createTray(); // 创建菜单栏图标
@@ -700,6 +743,8 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
+}).catch((error) => {
+  console.error('[Electron] app.whenReady() 失败:', error);
 });
 
 // 监听退出前事件，确保 isQuitting 被设置
