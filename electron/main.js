@@ -456,6 +456,55 @@ function registerIpcHandlers() {
       return { success: false, error: error.message || '列出文件失败' };
     }
   });
+
+  // 签名相关 IPC
+  // 获取签名模板列表
+  ipcMain.handle('signature:getTemplates', () => {
+    return settings.getSignatureTemplates();
+  });
+
+  // 保存签名模板
+  ipcMain.handle('signature:saveTemplate', async (event, template) => {
+    try {
+      settings.addSignatureTemplate(template);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  // 删除签名模板
+  ipcMain.handle('signature:deleteTemplate', async (event, id) => {
+    try {
+      settings.deleteSignatureTemplate(id);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  // RSA 签名
+  ipcMain.handle('signature:rsaSign', async (event, data, privateKey) => {
+    try {
+      const crypto = require('crypto');
+      
+      // 解析私钥
+      const key = crypto.createPrivateKey({
+        key: privateKey,
+        format: 'pem',
+      });
+
+      // 使用私钥签名
+      const sign = crypto.createSign('RSA-SHA256');
+      sign.update(data, 'utf8');
+      sign.end();
+      
+      const signature = sign.sign(key, 'base64');
+      return signature;
+    } catch (error) {
+      throw new Error(`RSA签名失败: ${error.message}`);
+    }
+  });
 }
 
 // 列出目录下的文件（递归）

@@ -29,4 +29,11 @@ contextBridge.exposeInMainWorld('electron', {
     selectDirectory: (title) => ipcRenderer.invoke('file-move:selectDirectory', title),
     listFiles: (dirPath) => ipcRenderer.invoke('file-move:listFiles', dirPath),
   },
+  // 签名相关 IPC（仅 Electron 环境）
+  signature: {
+    getTemplates: () => ipcRenderer.invoke('signature:getTemplates'),
+    saveTemplate: (template) => ipcRenderer.invoke('signature:saveTemplate', template),
+    deleteTemplate: (id) => ipcRenderer.invoke('signature:deleteTemplate', id),
+    rsaSign: (data, privateKey) => ipcRenderer.invoke('signature:rsaSign', data, privateKey),
+  },
 });

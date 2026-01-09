@@ -25,7 +25,7 @@
       <label style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; display: block;">
         选择要剔除的特殊字符类型：
       </label>
-      <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;">
         <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-tertiary); cursor: pointer;">
           <input type="checkbox" v-model="specialCharTypes" value="emoji" style="cursor: pointer; accent-color: #3b82f6;" />
           Emoji 表情符号
@@ -50,6 +50,36 @@
           <input type="checkbox" v-model="specialCharTypes" value="symbols" style="cursor: pointer; accent-color: #3b82f6;" />
           特殊符号
         </label>
+      </div>
+      
+      <div style="margin-top: 12px;">
+        <label style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; display: block;">
+          手动设置要剔除的字符（可多选）：
+        </label>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input
+              v-model="customCharsInput"
+              class="input"
+              type="text"
+              placeholder="输入要剔除的字符，例如: @#$%"
+              style="flex: 1; font-size: 13px; padding: 8px 12px;"
+              @keyup.enter="addCustomChars"
+            />
+            <button class="btn secondary" @click="addCustomChars" style="padding: 8px 16px; font-size: 13px;">
+              添加
+            </button>
+          </div>
+          <div v-if="customChars.length > 0" class="custom-chars-list">
+            <div v-for="(char, index) in customChars" :key="index" class="custom-char-item">
+              <span class="char-display">{{ char === ' ' ? '(空格)' : char === '\n' ? '(换行)' : char === '\t' ? '(制表符)' : char }}</span>
+              <button class="btn-icon-remove" @click="removeCustomChar(index)" title="删除">×</button>
+            </div>
+          </div>
+          <p style="font-size: 11px; color: var(--text-quaternary); margin: 0;">
+            提示：可以输入多个字符，每个字符都会被单独剔除
+          </p>
+        </div>
       </div>
     </div>
 
@@ -126,6 +156,8 @@ const message = ref('');
 const sortDescending = ref(false);
 const stats = ref<TextStats | null>(null);
 const specialCharTypes = ref<SpecialCharType[]>(['emoji', 'invisible']);
+const customChars = ref<string[]>([]);
+const customCharsInput = ref('');
 
 function handleProcess() {
   message.value = '';
@@ -158,11 +190,29 @@ function handleProcess() {
         output.value = toCamelCase(input.value);
         break;
       case 'removeSpecialChars':
-        if (specialCharTypes.value.length === 0) {
-          message.value = '请至少选择一种要剔除的特殊字符类型';
+        if (specialCharTypes.value.length === 0 && customChars.value.length === 0) {
+          message.value = '请至少选择一种要剔除的特殊字符类型或手动添加字符';
           return;
         }
-        output.value = removeSpecialChars(input.value, specialCharTypes.value);
+        let result = input.value;
+        
+        // 先处理预设类型
+        if (specialCharTypes.value.length > 0) {
+          result = removeSpecialChars(result, specialCharTypes.value);
+        }
+        
+        // 再处理手动添加的字符
+        if (customChars.value.length > 0) {
+          // 转义特殊字符用于正则表达式
+          const escapedChars = customChars.value.map(char => {
+            // 转义正则表达式特殊字符
+            return char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          });
+          const regex = new RegExp(`[${escapedChars.join('')}]`, 'g');
+          result = result.replace(regex, '');
+        }
+        
+        output.value = result;
         break;
       case 'stats':
         stats.value = getTextStats(input.value);
@@ -178,6 +228,34 @@ function handleClear() {
   output.value = '';
   message.value = '';
   stats.value = null;
+  customChars.value = [];
+  customCharsInput.value = '';
+}
+
+function addCustomChars() {
+  const input = customCharsInput.value.trim();
+  if (!input) {
+    message.value = '请输入要剔除的字符';
+    return;
+  }
+  
+  // 将输入的每个字符添加到列表中（去重）
+  const newChars = input.split('').filter(char => !customChars.value.includes(char));
+  if (newChars.length === 0) {
+    message.value = '这些字符已经添加过了';
+    return;
+  }
+  
+  customChars.value.push(...newChars);
+  customCharsInput.value = '';
+  message.value = `已添加 ${newChars.length} 个字符`;
+  setTimeout(() => {
+    message.value = '';
+  }, 2000);
+}
+
+function removeCustomChar(index: number) {
+  customChars.value.splice(index, 1);
 }
 
 async function copyOutput() {
@@ -188,6 +266,56 @@ async function copyOutput() {
   } catch {
     message.value = '复制失败，请手动复制';
   }
-}
+  }
 </script>
 
+<style scoped>
+.custom-chars-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color-input);
+  border-radius: 6px;
+  min-height: 40px;
+}
+
+.custom-char-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.char-display {
+  color: var(--text-secondary);
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
+.btn-icon-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.btn-icon-remove:hover {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+</style>

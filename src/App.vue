@@ -101,6 +101,7 @@
   import DiffTool from './tools/DiffTool.vue';
   import UnicodeTool from './tools/UnicodeTool.vue';
   import FileMoveTool from './tools/FileMoveTool.vue';
+  import SignatureTool from './tools/SignatureTool.vue';
 import SettingsPanel from './components/SettingsPanel.vue';
   
   interface ToolMeta {
@@ -131,6 +132,7 @@ import SettingsPanel from './components/SettingsPanel.vue';
   // Electron 环境下的额外工具
   const electronTools: ToolMeta[] = isElectron ? [
     { id: 'filemove', name: '文件移动', emoji: '📁', component: markRaw(FileMoveTool) },
+    { id: 'signature', name: '签名处理', emoji: '✍️', component: markRaw(SignatureTool) },
   ] : [];
 
   const tools = ref<ToolMeta[]>([...baseTools, ...electronTools]);

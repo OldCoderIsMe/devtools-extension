@@ -8,45 +8,130 @@
       <span class="warning-text">此操作会删除目标目录中的所有文件，请谨慎使用</span>
     </div>
 
-    <label class="field-label">选择配对</label>
-    <select v-model="selectedAlias" class="input" @change="loadPairInfo">
-      <option value="">-- 请选择配对 --</option>
-      <option v-for="pair in pairs" :key="pair.alias" :value="pair.alias">
-        {{ pair.alias }} - {{ pair.description || '无描述' }}
-      </option>
-    </select>
+    <div class="pairs-header">
+      <label class="field-label">选择配对（可多选）</label>
+      <button class="btn secondary btn-small" @click="showAddPairForm = true" :disabled="showAddPairForm">
+        + 新增配对
+      </button>
+    </div>
 
-    <div v-if="selectedPair" class="pair-info-section">
-      <div class="path-display">
-        <div class="path-row">
-          <span class="path-label">源目录:</span>
-          <span class="path-value">{{ selectedPair.sourcePath }}</span>
-        </div>
-        <div class="path-row">
-          <span class="path-label">目标目录:</span>
-          <span class="path-value">{{ selectedPair.targetPath }}</span>
-        </div>
+    <!-- 新增配对表单 -->
+    <div v-if="showAddPairForm" class="add-pair-form">
+      <h3 class="form-title">新增配对</h3>
+      <div class="form-item">
+        <label class="form-label">别名 *</label>
+        <input
+          v-model="newPair.alias"
+          class="form-input"
+          type="text"
+          placeholder="例如: a2b"
+        />
+        <p class="form-hint">用于标识此配对配置</p>
       </div>
 
-      <div class="files-preview">
-        <div class="files-column">
-          <h4 class="files-title">源目录文件</h4>
-          <div class="files-list" v-if="sourceFiles.length > 0">
-            <div v-for="(file, index) in sourceFiles" :key="index" class="file-item">
-              {{ file }}
-            </div>
+      <div class="form-item">
+        <label class="form-label">源目录 *</label>
+        <div class="path-input-wrapper">
+          <input
+            v-model="newPair.sourcePath"
+            class="form-input"
+            type="text"
+            placeholder="选择源目录"
+            readonly
+          />
+          <button class="btn secondary" @click="selectSourcePath">选择目录</button>
+        </div>
+        <p class="form-hint">要复制的源文件目录</p>
+      </div>
+
+      <div class="form-item">
+        <label class="form-label">目标目录 *</label>
+        <div class="path-input-wrapper">
+          <input
+            v-model="newPair.targetPath"
+            class="form-input"
+            type="text"
+            placeholder="选择目标目录"
+            readonly
+          />
+          <button class="btn secondary" @click="selectTargetPath">选择目录</button>
+        </div>
+        <p class="form-hint">清空后复制文件的目标目录</p>
+      </div>
+
+      <div class="form-item">
+        <label class="form-label">描述（可选）</label>
+        <input
+          v-model="newPair.description"
+          class="form-input"
+          type="text"
+          placeholder="例如: 备份项目文件"
+        />
+      </div>
+
+      <div class="form-actions">
+        <button class="btn secondary" @click="cancelAddPair">取消</button>
+        <button class="btn" @click="saveNewPair" :disabled="!canSaveNewPair">
+          保存
+        </button>
+      </div>
+    </div>
+
+    <div class="pairs-multiselect">
+      <div v-for="pair in pairs" :key="pair.alias" class="pair-checkbox-item">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            :value="pair.alias"
+            v-model="selectedAliases"
+            @change="onSelectionChange"
+          />
+          <span class="checkbox-text">
+            <strong>{{ pair.alias }}</strong>
+            <span v-if="pair.description" class="pair-desc"> - {{ pair.description }}</span>
+          </span>
+        </label>
+      </div>
+      <div v-if="pairs.length === 0 && !showAddPairForm" class="empty-pairs">
+        暂无配置的路径配对，点击上方"新增配对"按钮开始配置
+      </div>
+    </div>
+
+    <div v-if="selectedPairs.length > 0" class="pairs-info-section">
+      <div v-for="pair in selectedPairs" :key="pair.alias" class="pair-info-card">
+        <h3 class="pair-card-title">{{ pair.alias }} <span v-if="pair.description" class="pair-card-desc">- {{ pair.description }}</span></h3>
+        
+        <div class="path-display">
+          <div class="path-row">
+            <span class="path-label">源目录:</span>
+            <span class="path-value">{{ pair.sourcePath }}</span>
           </div>
-          <div v-else class="files-empty">暂无文件</div>
+          <div class="path-row">
+            <span class="path-label">目标目录:</span>
+            <span class="path-value">{{ pair.targetPath }}</span>
+          </div>
         </div>
 
-        <div class="files-column">
-          <h4 class="files-title">目标目录文件（将被清空）</h4>
-          <div class="files-list" v-if="targetFiles.length > 0">
-            <div v-for="(file, index) in targetFiles" :key="index" class="file-item warning">
-              {{ file }}
+        <div class="files-preview">
+          <div class="files-column">
+            <h4 class="files-title">源目录文件</h4>
+            <div class="files-list" v-if="sourceFiles[pair.alias] && sourceFiles[pair.alias].length > 0">
+              <div v-for="(file, index) in sourceFiles[pair.alias]" :key="index" class="file-item">
+                {{ file }}
+              </div>
             </div>
+            <div v-else class="files-empty">暂无文件</div>
           </div>
-          <div v-else class="files-empty">目录为空</div>
+
+          <div class="files-column">
+            <h4 class="files-title">目标目录文件（将被清空）</h4>
+            <div class="files-list" v-if="targetFiles[pair.alias] && targetFiles[pair.alias].length > 0">
+              <div v-for="(file, index) in targetFiles[pair.alias]" :key="index" class="file-item warning">
+                {{ file }}
+              </div>
+            </div>
+            <div v-else class="files-empty">目录为空</div>
+          </div>
         </div>
       </div>
 
@@ -54,9 +139,9 @@
         <button 
           class="btn" 
           @click="executeMove" 
-          :disabled="executing || !selectedAlias"
+          :disabled="executing || selectedAliases.length === 0"
         >
-          {{ executing ? '执行中...' : '确定执行' }}
+          {{ executing ? '执行中...' : `确定执行 (${selectedAliases.length}个配置)` }}
         </button>
         <button 
           class="btn secondary" 
@@ -105,15 +190,30 @@ interface LogEntry {
 
 const isElectron = ref(false);
 const pairs = ref<FileMovePair[]>([]);
-const selectedAlias = ref('');
-const selectedPair = ref<FileMovePair | null>(null);
-const sourceFiles = ref<string[]>([]);
-const targetFiles = ref<string[]>([]);
+const selectedAliases = ref<string[]>([]);
+const selectedPairs = ref<FileMovePair[]>([]);
+const sourceFiles = ref<Record<string, string[]>>({});
+const targetFiles = ref<Record<string, string[]>>({});
 const executing = ref(false);
 const logs = ref<LogEntry[]>([]);
 const message = ref('');
 const messageType = ref<'success' | 'error'>('success');
 const logsContainer = ref<HTMLElement | null>(null);
+
+// 新增配对相关
+const showAddPairForm = ref(false);
+const newPair = ref({
+  alias: '',
+  sourcePath: '',
+  targetPath: '',
+  description: '',
+});
+
+const canSaveNewPair = computed(() => {
+  return newPair.value.alias.trim() &&
+         newPair.value.sourcePath.trim() &&
+         newPair.value.targetPath.trim();
+});
 
 // 检查是否为 Electron 环境
 onMounted(() => {
@@ -133,38 +233,25 @@ async function loadPairs() {
 
   try {
     pairs.value = await electron.fileMove.getPairs();
-    if (pairs.value.length === 0) {
-      message.value = '暂无配置的路径配对，请在设置中配置';
-      messageType.value = 'error';
-    }
   } catch (error) {
     console.error('加载配对列表失败:', error);
     addLog('加载配对列表失败', 'error');
   }
 }
 
-// 加载配对信息
-async function loadPairInfo() {
-  if (!selectedAlias.value) {
-    selectedPair.value = null;
-    sourceFiles.value = [];
-    targetFiles.value = [];
-    return;
-  }
-
-  const pair = pairs.value.find(p => p.alias === selectedAlias.value);
-  if (!pair) {
-    selectedPair.value = null;
-    return;
-  }
-
-  selectedPair.value = pair;
-  await refreshFiles();
+// 选择改变
+function onSelectionChange() {
+  selectedPairs.value = pairs.value.filter(p => selectedAliases.value.includes(p.alias));
+  refreshFiles();
 }
 
 // 刷新文件列表
 async function refreshFiles() {
-  if (!selectedPair.value) return;
+  if (selectedPairs.value.length === 0) {
+    sourceFiles.value = {};
+    targetFiles.value = {};
+    return;
+  }
 
   const electron = (window as any).electron;
   if (!electron?.fileMove) return;
@@ -172,24 +259,26 @@ async function refreshFiles() {
   try {
     addLog('正在加载文件列表...', 'info');
     
-    // 加载源目录文件
-    try {
-      const sourceFilesList = await listDirectoryFiles(selectedPair.value.sourcePath);
-      sourceFiles.value = sourceFilesList;
-      addLog(`源目录: ${sourceFilesList.length} 个文件/目录`, 'info');
-    } catch (error: any) {
-      sourceFiles.value = [];
-      addLog(`加载源目录失败: ${error.message}`, 'error');
-    }
-    
-    // 加载目标目录文件
-    try {
-      const targetFilesList = await listDirectoryFiles(selectedPair.value.targetPath);
-      targetFiles.value = targetFilesList;
-      addLog(`目标目录: ${targetFilesList.length} 个文件/目录`, 'info');
-    } catch (error: any) {
-      targetFiles.value = [];
-      addLog(`加载目标目录失败: ${error.message}`, 'error');
+    for (const pair of selectedPairs.value) {
+      // 加载源目录文件
+      try {
+        const sourceFilesList = await listDirectoryFiles(pair.sourcePath);
+        sourceFiles.value[pair.alias] = sourceFilesList;
+        addLog(`[${pair.alias}] 源目录: ${sourceFilesList.length} 个文件/目录`, 'info');
+      } catch (error: any) {
+        sourceFiles.value[pair.alias] = [];
+        addLog(`[${pair.alias}] 加载源目录失败: ${error.message}`, 'error');
+      }
+      
+      // 加载目标目录文件
+      try {
+        const targetFilesList = await listDirectoryFiles(pair.targetPath);
+        targetFiles.value[pair.alias] = targetFilesList;
+        addLog(`[${pair.alias}] 目标目录: ${targetFilesList.length} 个文件/目录`, 'info');
+      } catch (error: any) {
+        targetFiles.value[pair.alias] = [];
+        addLog(`[${pair.alias}] 加载目标目录失败: ${error.message}`, 'error');
+      }
     }
   } catch (error: any) {
     console.error('加载文件列表失败:', error);
@@ -217,9 +306,10 @@ async function listDirectoryFiles(dirPath: string): Promise<string[]> {
 
 // 执行文件移动
 async function executeMove() {
-  if (!selectedAlias.value || executing.value) return;
+  if (selectedAliases.value.length === 0 || executing.value) return;
 
-  if (!confirm(`确定要执行文件移动操作吗？\n\n这将清空目标目录 "${selectedPair.value?.targetPath}" 中的所有文件，然后复制源目录 "${selectedPair.value?.sourcePath}" 的所有文件到目标目录。`)) {
+  const pairsList = selectedPairs.value.map(p => `${p.alias} (${p.sourcePath} -> ${p.targetPath})`).join('\n');
+  if (!confirm(`确定要执行文件移动操作吗？\n\n将执行以下 ${selectedAliases.value.length} 个配置：\n${pairsList}\n\n每个配置都会清空目标目录中的所有文件，然后复制源目录的所有文件到目标目录。`)) {
     return;
   }
 
@@ -231,50 +321,67 @@ async function executeMove() {
 
   executing.value = true;
   addLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
-  addLog(`开始执行文件移动: ${selectedAlias.value}`, 'info');
-  addLog(`源目录: ${selectedPair.value?.sourcePath}`, 'info');
-  addLog(`目标目录: ${selectedPair.value?.targetPath}`, 'info');
+  addLog(`开始批量执行文件移动: ${selectedAliases.value.length} 个配置`, 'info');
   addLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
 
-  try {
-    const startTime = Date.now();
-    addLog('步骤 1/2: 正在清空目标目录...', 'info');
-    
-    const result = await electron.fileMove.execute(selectedAlias.value, false);
-    const duration = Date.now() - startTime;
+  let successCount = 0;
+  let failCount = 0;
 
-    if (result.success) {
-      addLog('步骤 2/2: 正在复制文件...', 'info');
-      addLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'success');
-      addLog('✓ 操作成功完成！', 'success');
-      if (result.stats) {
-        addLog(`✓ 复制文件数: ${result.stats.filesCopied || 0}`, 'success');
-        addLog(`✓ 总耗时: ${result.stats.duration || duration}ms`, 'success');
-      }
-      addLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'success');
-      message.value = '文件移动操作成功完成';
-      messageType.value = 'success';
+  for (let i = 0; i < selectedAliases.value.length; i++) {
+    const alias = selectedAliases.value[i];
+    const pair = selectedPairs.value.find(p => p.alias === alias);
+    if (!pair) continue;
+
+    addLog(`\n[${i + 1}/${selectedAliases.value.length}] 执行配置: ${alias}`, 'info');
+    addLog(`源目录: ${pair.sourcePath}`, 'info');
+    addLog(`目标目录: ${pair.targetPath}`, 'info');
+
+    try {
+      const startTime = Date.now();
+      addLog('步骤 1/2: 正在清空目标目录...', 'info');
       
-      // 刷新文件列表
-      addLog('正在刷新文件列表...', 'info');
-      await refreshFiles();
-      addLog('文件列表已更新', 'success');
-    } else {
-      addLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'error');
-      addLog(`✗ 操作失败: ${result.error}`, 'error');
-      addLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'error');
-      message.value = result.error || '操作失败';
-      messageType.value = 'error';
+      const result = await electron.fileMove.execute(alias, false);
+      const duration = Date.now() - startTime;
+
+      if (result.success) {
+        addLog('步骤 2/2: 正在复制文件...', 'info');
+        addLog(`✓ [${alias}] 操作成功完成！`, 'success');
+        if (result.stats) {
+          addLog(`✓ 复制文件数: ${result.stats.filesCopied || 0}`, 'success');
+          addLog(`✓ 耗时: ${result.stats.duration || duration}ms`, 'success');
+        }
+        successCount++;
+      } else {
+        addLog(`✗ [${alias}] 操作失败: ${result.error}`, 'error');
+        failCount++;
+      }
+    } catch (error: any) {
+      addLog(`✗ [${alias}] 执行失败: ${error.message}`, 'error');
+      failCount++;
     }
-  } catch (error: any) {
-    addLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'error');
-    addLog(`✗ 执行失败: ${error.message}`, 'error');
-    addLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'error');
-    message.value = error.message || '执行失败';
-    messageType.value = 'error';
-  } finally {
-    executing.value = false;
   }
+
+  addLog('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+  addLog(`批量执行完成: 成功 ${successCount} 个，失败 ${failCount} 个`, successCount === selectedAliases.value.length ? 'success' : 'warning');
+  addLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+
+  if (successCount === selectedAliases.value.length) {
+    message.value = `所有配置执行成功 (${successCount}个)`;
+    messageType.value = 'success';
+  } else if (failCount === selectedAliases.value.length) {
+    message.value = `所有配置执行失败 (${failCount}个)`;
+    messageType.value = 'error';
+  } else {
+    message.value = `部分成功: ${successCount}个成功, ${failCount}个失败`;
+    messageType.value = 'error';
+  }
+  
+  // 刷新文件列表
+  addLog('正在刷新文件列表...', 'info');
+  await refreshFiles();
+  addLog('文件列表已更新', 'success');
+
+  executing.value = false;
 }
 
 // 添加日志
@@ -309,6 +416,95 @@ watch(message, () => {
     }, 5000);
   }
 });
+
+// 新增配对相关函数
+async function selectSourcePath() {
+  const electron = (window as any).electron;
+  if (!electron?.fileMove) {
+    showMessage('Electron 环境不可用', 'error');
+    return;
+  }
+
+  try {
+    const result = await electron.fileMove.selectDirectory('选择源目录');
+    if (!result.canceled && result.path) {
+      newPair.value.sourcePath = result.path;
+    }
+  } catch (error: any) {
+    console.error('选择目录失败:', error);
+    showMessage('选择目录失败', 'error');
+  }
+}
+
+async function selectTargetPath() {
+  const electron = (window as any).electron;
+  if (!electron?.fileMove) {
+    showMessage('Electron 环境不可用', 'error');
+    return;
+  }
+
+  try {
+    const result = await electron.fileMove.selectDirectory('选择目标目录');
+    if (!result.canceled && result.path) {
+      newPair.value.targetPath = result.path;
+    }
+  } catch (error: any) {
+    console.error('选择目录失败:', error);
+    showMessage('选择目录失败', 'error');
+  }
+}
+
+async function saveNewPair() {
+  const electron = (window as any).electron;
+  if (!electron?.fileMove) {
+    showMessage('Electron 环境不可用', 'error');
+    return;
+  }
+
+  if (!canSaveNewPair.value) {
+    showMessage('请填写所有必填项', 'error');
+    return;
+  }
+
+  try {
+    const pair = {
+      alias: newPair.value.alias.trim(),
+      sourcePath: newPair.value.sourcePath.trim(),
+      targetPath: newPair.value.targetPath.trim(),
+      description: newPair.value.description.trim() || undefined,
+    };
+
+    const result = await electron.fileMove.addPair(pair);
+    if (result.success) {
+      showMessage('配对已添加', 'success');
+      await loadPairs();
+      cancelAddPair();
+    } else {
+      showMessage(result.error || '添加失败', 'error');
+    }
+  } catch (error: any) {
+    console.error('保存配对失败:', error);
+    showMessage(error.message || '保存失败', 'error');
+  }
+}
+
+function cancelAddPair() {
+  showAddPairForm.value = false;
+  newPair.value = {
+    alias: '',
+    sourcePath: '',
+    targetPath: '',
+    description: '',
+  };
+}
+
+function showMessage(text: string, type: 'success' | 'error' = 'success') {
+  message.value = text;
+  messageType.value = type;
+  setTimeout(() => {
+    message.value = '';
+  }, 3000);
+}
 </script>
 
 <style scoped>
@@ -337,6 +533,173 @@ watch(message, () => {
 
 .warning-text {
   flex: 1;
+}
+
+.pairs-multiselect {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color-input);
+  border-radius: 8px;
+  padding: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.pair-checkbox-item {
+  margin-bottom: 8px;
+}
+
+.pair-checkbox-item:last-child {
+  margin-bottom: 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.checkbox-label input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.checkbox-text {
+  flex: 1;
+}
+
+.checkbox-text strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.pair-desc {
+  color: var(--text-tertiary);
+  font-weight: normal;
+}
+
+.pairs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.add-pair-form {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color-input);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.form-title {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.form-input {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color-input);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--border-color-focus);
+  background: var(--bg-input-focus);
+}
+
+.form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.path-input-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.path-input-wrapper .form-input {
+  flex: 1;
+}
+
+.form-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-quaternary);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.empty-pairs {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+.pairs-info-section {
+  margin-top: 16px;
+}
+
+.pair-info-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color-input);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.pair-info-card:last-child {
+  margin-bottom: 0;
+}
+
+.pair-card-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pair-card-desc {
+  font-weight: normal;
+  color: var(--text-tertiary);
+  font-size: 14px;
 }
 
 .pair-info-section {

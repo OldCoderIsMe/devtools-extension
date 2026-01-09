@@ -17,6 +17,7 @@ const DEFAULT_SETTINGS = {
     quickSearchAlt: process.platform === 'darwin' ? 'Command+Space' : 'Control+Space',
   },
   fileMovePairs: [], // 文件移动路径配对配置
+  signatureTemplates: [], // 签名模板配置
 };
 
 // 读取设置
@@ -117,6 +118,55 @@ function deleteFileMovePair(alias) {
   return saveSettings(settings);
 }
 
+// 获取签名模板列表
+function getSignatureTemplates() {
+  const settings = loadSettings();
+  return settings.signatureTemplates || [];
+}
+
+// 添加签名模板
+function addSignatureTemplate(template) {
+  const settings = loadSettings();
+  if (!settings.signatureTemplates) {
+    settings.signatureTemplates = [];
+  }
+  // 检查名称是否已存在
+  const exists = settings.signatureTemplates.find(t => t.name === template.name);
+  if (exists) {
+    throw new Error(`模板名称 "${template.name}" 已存在`);
+  }
+  settings.signatureTemplates.push(template);
+  return saveSettings(settings);
+}
+
+// 更新签名模板
+function updateSignatureTemplate(id, template) {
+  const settings = loadSettings();
+  if (!settings.signatureTemplates) {
+    settings.signatureTemplates = [];
+  }
+  const index = settings.signatureTemplates.findIndex(t => t.id === id);
+  if (index === -1) {
+    throw new Error(`模板 ID "${id}" 不存在`);
+  }
+  settings.signatureTemplates[index] = { ...settings.signatureTemplates[index], ...template };
+  return saveSettings(settings);
+}
+
+// 删除签名模板
+function deleteSignatureTemplate(id) {
+  const settings = loadSettings();
+  if (!settings.signatureTemplates) {
+    settings.signatureTemplates = [];
+  }
+  const index = settings.signatureTemplates.findIndex(t => t.id === id);
+  if (index === -1) {
+    throw new Error(`模板 ID "${id}" 不存在`);
+  }
+  settings.signatureTemplates.splice(index, 1);
+  return saveSettings(settings);
+}
+
 module.exports = {
   loadSettings,
   saveSettings,
@@ -126,5 +176,9 @@ module.exports = {
   addFileMovePair,
   updateFileMovePair,
   deleteFileMovePair,
+  getSignatureTemplates,
+  addSignatureTemplate,
+  updateSignatureTemplate,
+  deleteSignatureTemplate,
   DEFAULT_SETTINGS,
 };
