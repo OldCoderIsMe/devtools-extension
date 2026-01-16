@@ -18,7 +18,7 @@
         <select v-model="selectedTemplateId" class="input" @change="loadTemplate">
           <option value="">-- 不使用模板 --</option>
           <option v-for="template in templates" :key="template.id" :value="template.id">
-            {{ template.name }}
+            {{ template.name }} {{ template.key ? `(${maskKey(template.key)})` : '' }}
           </option>
         </select>
         <button class="btn secondary" @click="deleteTemplate" :disabled="!selectedTemplateId">
@@ -30,23 +30,39 @@
     <!-- 签名表单（通用结构，支持所有签名类型） -->
     <template v-if="currentSignatureConfig">
       <!-- 密钥输入（根据类型显示不同的输入框） -->
-      <label class="field-label">{{ currentSignatureConfig.keyLabel }}</label>
-      <input
-        v-if="currentSignatureConfig.keyInputType === 'text'"
-        v-model="signatureKey"
-        class="input"
-        type="text"
-        :placeholder="currentSignatureConfig.keyPlaceholder"
-        style="margin-bottom: 8px;"
-      />
-      <textarea
-        v-else
-        v-model="signatureKey"
-        class="textarea"
-        rows="4"
-        :placeholder="currentSignatureConfig.keyPlaceholder"
-        style="margin-bottom: 8px;"
-      ></textarea>
+      <div class="key-input-wrapper">
+        <label class="field-label">
+          {{ currentSignatureConfig.keyLabel }}
+          <button
+            v-if="signatureKeyFull && signatureKeyFull.length > 0"
+            class="btn-toggle-mask"
+            @click="toggleKeyMask"
+            :title="isKeyMasked ? '显示完整密钥' : '隐藏密钥'"
+          >
+            {{ isKeyMasked ? '👁️ 显示' : '🙈 隐藏' }}
+          </button>
+        </label>
+        <input
+          v-if="currentSignatureConfig.keyInputType === 'text'"
+          v-model="displayKey"
+          class="input"
+          type="text"
+          :placeholder="currentSignatureConfig.keyPlaceholder"
+          @focus="onKeyFocus"
+          @input="onKeyInput"
+          style="margin-bottom: 8px;"
+        />
+        <textarea
+          v-else
+          v-model="displayKey"
+          class="textarea"
+          rows="4"
+          :placeholder="currentSignatureConfig.keyPlaceholder"
+          @focus="onKeyFocus"
+          @input="onKeyInput"
+          style="margin-bottom: 8px;"
+        ></textarea>
+      </div>
 
       <label class="field-label">数据格式</label>
       <select v-model="dataFormat" class="input" style="margin-bottom: 8px;">
@@ -179,7 +195,10 @@ const templates = ref<SignatureTemplate[]>([]);
 const selectedTemplateId = ref('');
 
 // 通用状态
-const signatureKey = ref(''); // 统一的密钥/私钥字段
+const signatureKey = ref(''); // 统一的密钥/私钥字段（用于签名，存储完整密钥）
+const signatureKeyFull = ref(''); // 隐藏字段：存储完整的密钥（从模板加载的）
+const displayKey = ref(''); // 显示字段：用于输入框显示（可能是脱敏版本）
+const isKeyMasked = ref(false); // 是否显示脱敏版本
 const signatureResult = ref(''); // 统一的签名结果字段
 const dataFormat = ref<'json' | 'properties'>('json');
 const dataContent = ref('');
@@ -204,10 +223,11 @@ const dataContentPlaceholder = computed(() => {
   }
 });
 
-// 检查是否可以生成签名
+// 检查是否可以生成签名（使用完整密钥）
 const canGenerate = computed(() => {
   if (!currentSignatureConfig.value) return false;
-  if (currentSignatureConfig.value.needsKey && !signatureKey.value.trim()) return false;
+  const keyToCheck = signatureKey.value.trim() || signatureKeyFull.value.trim();
+  if (currentSignatureConfig.value.needsKey && !keyToCheck) return false;
   if (!dataContent.value.trim()) return false;
   return true;
 });
@@ -223,6 +243,45 @@ function onSignatureTypeChange() {
   selectedTemplateId.value = '';
 }
 
+// 切换密钥显示/隐藏
+function toggleKeyMask() {
+  isKeyMasked.value = !isKeyMasked.value;
+  updateDisplayKey();
+}
+
+// 更新显示密钥（根据脱敏状态）
+function updateDisplayKey() {
+  if (isKeyMasked.value && signatureKeyFull.value) {
+    displayKey.value = maskKey(signatureKeyFull.value);
+  } else {
+    displayKey.value = signatureKey.value || signatureKeyFull.value;
+  }
+}
+
+// 密钥输入框获得焦点时处理
+function onKeyFocus() {
+  // 如果当前是脱敏状态，用户聚焦输入框时自动切换到显示完整内容
+  if (isKeyMasked.value && signatureKeyFull.value) {
+    isKeyMasked.value = false;
+    displayKey.value = signatureKeyFull.value;
+  }
+}
+
+// 密钥输入处理
+function onKeyInput(event: Event) {
+  const target = event.target as HTMLInputElement | HTMLTextAreaElement;
+  const newValue = target.value;
+  
+  // 用户修改了密钥，同步到隐藏字段和签名字段
+  signatureKey.value = newValue;
+  signatureKeyFull.value = newValue;
+  
+  // 如果当前是脱敏状态，用户开始编辑时自动切换到显示完整内容
+  if (isKeyMasked.value) {
+    isKeyMasked.value = false;
+  }
+}
+
 // 加载模板
 function loadTemplate() {
   if (!selectedTemplateId.value) {
@@ -235,7 +294,21 @@ function loadTemplate() {
 
   signatureType.value = template.type;
   dataFormat.value = template.dataFormat;
-  signatureKey.value = template.key || '';
+  
+  // 从模板加载密钥到隐藏字段
+  const templateKey = template.key || '';
+  signatureKeyFull.value = templateKey;
+  signatureKey.value = templateKey; // 也同步到签名字段
+  
+  // 如果密钥存在，默认显示脱敏版本
+  if (templateKey) {
+    isKeyMasked.value = true;
+    displayKey.value = maskKey(templateKey);
+  } else {
+    isKeyMasked.value = false;
+    displayKey.value = '';
+  }
+  
   dataContent.value = '';
 }
 
@@ -295,10 +368,19 @@ async function generateSignature() {
 
     let signString = parts.join('&');
 
+    // 获取实际使用的密钥（优先使用 signatureKey，如果没有则使用 signatureKeyFull）
+    const actualKey = signatureKey.value.trim() || signatureKeyFull.value.trim();
+    
+    if (!actualKey) {
+      message.value = '密钥不能为空';
+      messageType.value = 'error';
+      return;
+    }
+
     // 根据签名类型生成签名
     if (signatureType.value === 'md5') {
       // MD5签名：拼接key=密钥
-      signString = `${signString}&key=${signatureKey.value}`;
+      signString = `${signString}&key=${actualKey}`;
       signatureResult.value = md5(signString);
       message.value = '签名生成成功';
       messageType.value = 'success';
@@ -306,7 +388,7 @@ async function generateSignature() {
       // RSA签名（需要在Electron环境中）
       if (isElectron.value && (window as any).electron?.signature) {
         try {
-          const signature = await (window as any).electron.signature.rsaSign(signString, signatureKey.value);
+          const signature = await (window as any).electron.signature.rsaSign(signString, actualKey);
           signatureResult.value = signature;
           message.value = '签名生成成功';
           messageType.value = 'success';
@@ -322,7 +404,7 @@ async function generateSignature() {
       // 扩展新签名类型的地方
       // 示例：添加 SHA256 签名
       // else if (signatureType.value === 'sha256') {
-      //   signString = `${signString}&key=${signatureKey.value}`;
+      //   signString = `${signString}&key=${actualKey}`;
       //   signatureResult.value = sha256(signString); // 需要导入 sha256 函数
       //   message.value = '签名生成成功';
       //   messageType.value = 'success';
@@ -339,6 +421,9 @@ async function generateSignature() {
 // 清空所有
 function clearAll() {
   signatureKey.value = '';
+  signatureKeyFull.value = '';
+  displayKey.value = '';
+  isKeyMasked.value = false;
   dataContent.value = '';
   signatureResult.value = '';
   message.value = '';
@@ -374,12 +459,15 @@ async function saveTemplate() {
   }
 
   try {
+    // 保存时使用实际密钥（优先使用 signatureKey，如果没有则使用 signatureKeyFull）
+    const keyToSave = signatureKey.value.trim() || signatureKeyFull.value.trim();
+    
     const template: SignatureTemplate = {
       id: Date.now().toString(),
       name: templateName.value.trim(),
       type: signatureType.value,
       dataFormat: dataFormat.value,
-      key: signatureKey.value,
+      key: keyToSave,
     };
 
     const result = await (window as any).electron.signature.saveTemplate(template);
@@ -431,6 +519,21 @@ async function deleteTemplate() {
   }
 }
 
+// 密钥脱敏函数
+function maskKey(key: string): string {
+  if (!key || key.length === 0) return '';
+  if (key.length <= 4) {
+    // 如果密钥很短，只显示第一个字符，其余用 * 代替
+    return key[0] + '*'.repeat(key.length - 1);
+  } else if (key.length <= 8) {
+    // 中等长度：显示前2个和后2个字符
+    return key.substring(0, 2) + '***' + key.substring(key.length - 2);
+  } else {
+    // 长密钥：显示前3个和后3个字符
+    return key.substring(0, 3) + '****' + key.substring(key.length - 3);
+  }
+}
+
 // 加载模板列表
 async function loadTemplates() {
   if (!isElectron.value || !(window as any).electron?.signature) {
@@ -471,6 +574,34 @@ onMounted(() => {
 
 .template-selector .input {
   flex: 1;
+}
+
+.key-input-wrapper {
+  position: relative;
+}
+
+.key-input-wrapper .field-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-toggle-mask {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+}
+
+.btn-toggle-mask:hover {
+  background: var(--bg-btn-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-color-focus);
 }
 
 .modal-overlay {

@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS = {
   shortcuts: {
     quickSearch: process.platform === 'darwin' ? 'Command+K' : 'Control+K',
     quickSearchAlt: process.platform === 'darwin' ? 'Command+Space' : 'Control+Space',
+    countdownWidget: process.platform === 'darwin' ? 'Command+Shift+Y' : 'Control+Shift+Y',
   },
   fileMovePairs: [], // 文件移动路径配对配置
   signatureTemplates: [], // 签名模板配置

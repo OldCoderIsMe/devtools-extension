@@ -18,6 +18,7 @@ export default defineConfig({
       input: {
         popup: resolve(__dirname, 'index.html'),
         'quick-search': resolve(__dirname, 'quick-search.html'),
+        'year-countdown-widget': resolve(__dirname, 'year-countdown-widget.html'),
       },
       output: {
         entryFileNames: `assets/[name].js`,

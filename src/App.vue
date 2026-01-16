@@ -102,6 +102,7 @@
   import UnicodeTool from './tools/UnicodeTool.vue';
   import FileMoveTool from './tools/FileMoveTool.vue';
   import SignatureTool from './tools/SignatureTool.vue';
+  import YearCountdownTool from './tools/YearCountdownTool.vue';
 import SettingsPanel from './components/SettingsPanel.vue';
   
   interface ToolMeta {
@@ -127,6 +128,7 @@ import SettingsPanel from './components/SettingsPanel.vue';
     { id: 'regex', name: '正则表达式', emoji: '🔍', component: markRaw(RegexTool) },
     { id: 'qrcode', name: '二维码生成', emoji: '📱', component: markRaw(QrcodeTool) },
     { id: 'diff', name: '文本差异对比', emoji: '🔄', component: markRaw(DiffTool) },
+    { id: 'yearcountdown', name: '年度倒计时', emoji: '📅', component: markRaw(YearCountdownTool) },
   ];
 
   // Electron 环境下的额外工具

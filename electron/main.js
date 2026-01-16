@@ -22,6 +22,7 @@ const isDev = process.env.NODE_ENV === 'development' ||
 
 let mainWindow;
 let quickSearchWindow = null;
+let countdownWidgetWindow = null;
 let tray = null;
 let isQuitting = false; // 标记是否正在退出应用
 
@@ -201,6 +202,91 @@ function createWindow() {
   });
 }
 
+// 创建年度倒计时窗口（Control Center 风格）
+function createCountdownWidgetWindow() {
+  // 如果窗口已存在，切换显示/隐藏
+  if (countdownWidgetWindow) {
+    if (countdownWidgetWindow.isVisible()) {
+      countdownWidgetWindow.hide();
+    } else {
+      countdownWidgetWindow.show();
+      countdownWidgetWindow.focus();
+    }
+    return;
+  }
+
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+  
+  // Control Center 风格的窗口尺寸（每行60个点，宽度再放大20%）
+  const windowWidth = 403;
+  const windowHeight = 240;
+  // 位置：右上角（类似 Control Center）
+  const x = width - windowWidth - 20;
+  const y = 60; // 距离顶部 60px
+
+  try {
+    countdownWidgetWindow = new BrowserWindow({
+      width: windowWidth,
+      height: windowHeight,
+      x: x,
+      y: y,
+      frame: false, // 无边框窗口
+      transparent: true, // 透明背景，用于圆角效果
+      backgroundColor: '#00000000', // 透明
+      resizable: false,
+      alwaysOnTop: true, // 始终置顶
+      skipTaskbar: true, // 不在任务栏显示
+      hasShadow: true, // macOS 阴影效果
+      visibleOnAllWorkspaces: true, // 在所有工作空间可见
+      acceptFirstMouse: true, // 接受首次鼠标点击
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        enableRemoteModule: false,
+        preload: path.join(__dirname, 'preload.js'),
+        webSecurity: true,
+      },
+      show: false,
+    });
+
+    // 加载年度倒计时页面
+    if (isDev) {
+      const port = process.env.VITE_PORT || process.env.PORT || 5173;
+      countdownWidgetWindow.loadURL(`http://localhost:${port}/year-countdown-widget.html`);
+    } else {
+      const countdownWidgetPath = path.join(__dirname, '../dist/year-countdown-widget.html');
+      countdownWidgetWindow.loadFile(countdownWidgetPath);
+    }
+
+    // 窗口准备好后显示
+    countdownWidgetWindow.once('ready-to-show', () => {
+      countdownWidgetWindow.show();
+      // 不自动聚焦，避免干扰其他应用
+      // countdownWidgetWindow.focus();
+    });
+
+    // 确保窗口始终可见，即使失去焦点也不隐藏
+    countdownWidgetWindow.on('blur', () => {
+      // 失去焦点时保持显示，不隐藏窗口
+      if (countdownWidgetWindow && !countdownWidgetWindow.isDestroyed()) {
+        // 确保窗口仍然可见
+        if (!countdownWidgetWindow.isVisible()) {
+          countdownWidgetWindow.show();
+        }
+      }
+    });
+
+    // 窗口关闭时清理引用
+    countdownWidgetWindow.on('closed', () => {
+      countdownWidgetWindow = null;
+    });
+  } catch (error) {
+    console.error('[Electron] 创建年度倒计时窗口失败:', error);
+    countdownWidgetWindow = null;
+  }
+}
+
 // 创建快速搜索弹窗
 function createQuickSearchWindow() {
   // 如果窗口已存在，直接显示并聚焦
@@ -292,8 +378,9 @@ function registerGlobalShortcuts() {
   // 从设置中读取快捷键
   const shortcut1 = settings.getShortcut('quickSearch');
   const shortcut2 = settings.getShortcut('quickSearchAlt');
+  const shortcut3 = settings.getShortcut('countdownWidget');
 
-  // 注册主快捷键
+  // 注册快速搜索主快捷键
   if (shortcut1) {
     const ret1 = globalShortcut.register(shortcut1, () => {
       createQuickSearchWindow();
@@ -306,7 +393,7 @@ function registerGlobalShortcuts() {
     }
   }
 
-  // 注册备用快捷键
+  // 注册快速搜索备用快捷键
   if (shortcut2 && shortcut2 !== shortcut1) {
     const ret2 = globalShortcut.register(shortcut2, () => {
       createQuickSearchWindow();
@@ -318,6 +405,19 @@ function registerGlobalShortcuts() {
       console.log(`[Electron] 备用全局快捷键注册失败: ${shortcut2} (可能已被占用)`);
     }
   }
+
+  // 注册年度倒计时快捷键
+  if (shortcut3) {
+    const ret3 = globalShortcut.register(shortcut3, () => {
+      createCountdownWidgetWindow();
+    });
+    if (ret3) {
+      registeredShortcuts.push(shortcut3);
+      console.log(`[Electron] 年度倒计时快捷键已注册: ${shortcut3}`);
+    } else {
+      console.log(`[Electron] 年度倒计时快捷键注册失败: ${shortcut3} (可能已被占用)`);
+    }
+  }
 }
 
 // 注册 IPC 处理器
@@ -326,6 +426,13 @@ function registerIpcHandlers() {
   ipcMain.handle('quick-search:close', () => {
     if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
       quickSearchWindow.hide();
+    }
+  });
+
+  // 关闭年度倒计时窗口
+  ipcMain.handle('countdown-widget:close', () => {
+    if (countdownWidgetWindow && !countdownWidgetWindow.isDestroyed()) {
+      countdownWidgetWindow.hide();
     }
   });
 
@@ -615,6 +722,12 @@ function createTray() {
         createQuickSearchWindow();
       },
     },
+    {
+      label: '年度倒计时',
+      click: () => {
+        createCountdownWidgetWindow();
+      },
+    },
     { type: 'separator' },
     {
       label: '关于',
@@ -633,6 +746,9 @@ function createTray() {
         }
         if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
           quickSearchWindow.destroy();
+        }
+        if (countdownWidgetWindow && !countdownWidgetWindow.isDestroyed()) {
+          countdownWidgetWindow.destroy();
         }
         app.quit();
       },
@@ -688,6 +804,9 @@ function createMenu() {
             }
             if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
               quickSearchWindow.destroy();
+            }
+            if (countdownWidgetWindow && !countdownWidgetWindow.isDestroyed()) {
+              countdownWidgetWindow.destroy();
             }
             app.quit();
           },
@@ -790,6 +909,13 @@ app.whenReady().then(() => {
     } else {
       // 如果没有主窗口，创建一个
       createWindow();
+    }
+    
+    // 确保年度倒计时窗口始终可见
+    if (countdownWidgetWindow && !countdownWidgetWindow.isDestroyed()) {
+      if (!countdownWidgetWindow.isVisible()) {
+        countdownWidgetWindow.show();
+      }
     }
   });
 }).catch((error) => {

@@ -36,4 +36,6 @@ contextBridge.exposeInMainWorld('electron', {
     deleteTemplate: (id) => ipcRenderer.invoke('signature:deleteTemplate', id),
     rsaSign: (data, privateKey) => ipcRenderer.invoke('signature:rsaSign', data, privateKey),
   },
+  // 年度倒计时窗口相关 IPC
+  closeWindow: () => ipcRenderer.invoke('countdown-widget:close'),
 });
