@@ -235,7 +235,7 @@ function createCountdownWidgetWindow() {
       transparent: true, // 透明背景，用于圆角效果
       backgroundColor: '#00000000', // 透明
       resizable: false,
-      alwaysOnTop: true, // 始终置顶
+      alwaysOnTop: false, // 不置顶，保持在最底层
       skipTaskbar: true, // 不在任务栏显示
       hasShadow: true, // macOS 阴影效果
       visibleOnAllWorkspaces: true, // 在所有工作空间可见
@@ -266,16 +266,8 @@ function createCountdownWidgetWindow() {
       // countdownWidgetWindow.focus();
     });
 
-    // 确保窗口始终可见，即使失去焦点也不隐藏
-    countdownWidgetWindow.on('blur', () => {
-      // 失去焦点时保持显示，不隐藏窗口
-      if (countdownWidgetWindow && !countdownWidgetWindow.isDestroyed()) {
-        // 确保窗口仍然可见
-        if (!countdownWidgetWindow.isVisible()) {
-          countdownWidgetWindow.show();
-        }
-      }
-    });
+    // 失去焦点时不自动显示窗口（允许用户手动隐藏）
+    // 移除了自动显示逻辑，允许窗口正常隐藏
 
     // 窗口关闭时清理引用
     countdownWidgetWindow.on('closed', () => {
@@ -429,10 +421,23 @@ function registerIpcHandlers() {
     }
   });
 
-  // 关闭年度倒计时窗口
+  // 隐藏年度倒计时窗口
   ipcMain.handle('countdown-widget:close', () => {
-    if (countdownWidgetWindow && !countdownWidgetWindow.isDestroyed()) {
+    console.log('[Electron] 收到隐藏年度倒计时窗口请求');
+    
+    if (!countdownWidgetWindow || countdownWidgetWindow.isDestroyed()) {
+      console.log('[Electron] 年度倒计时窗口不存在或已销毁');
+      return { success: false, error: '窗口不存在' };
+    }
+    
+    if (countdownWidgetWindow.isVisible()) {
+      console.log('[Electron] 隐藏年度倒计时窗口');
       countdownWidgetWindow.hide();
+      console.log('[Electron] 窗口隐藏完成，当前可见状态:', countdownWidgetWindow.isVisible());
+      return { success: true, message: '窗口已隐藏' };
+    } else {
+      console.log('[Electron] 年度倒计时窗口已经隐藏');
+      return { success: true, message: '窗口已经隐藏' };
     }
   });
 
@@ -911,12 +916,7 @@ app.whenReady().then(() => {
       createWindow();
     }
     
-    // 确保年度倒计时窗口始终可见
-    if (countdownWidgetWindow && !countdownWidgetWindow.isDestroyed()) {
-      if (!countdownWidgetWindow.isVisible()) {
-        countdownWidgetWindow.show();
-      }
-    }
+    // 不自动显示年度倒计时窗口，让用户通过菜单或快捷键控制
   });
 }).catch((error) => {
   console.error('[Electron] app.whenReady() 失败:', error);

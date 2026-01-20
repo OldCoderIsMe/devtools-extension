@@ -44,10 +44,6 @@
         position: relative;
       }
 
-      .widget-container:hover .widget-close-btn {
-        opacity: 1;
-        visibility: visible;
-      }
 
       .widget-header {
         display: flex;
@@ -56,6 +52,7 @@
         margin-bottom: 12px;
         -webkit-app-region: no-drag; /* 头部区域不可拖动 */
         position: relative;
+        z-index: 1;
       }
 
       .widget-year {
@@ -127,27 +124,43 @@
         width: 20px;
         height: 20px;
         padding: 0;
+        margin: 0;
         background: rgba(255, 255, 255, 0.15);
         border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 50%;
         color: #ffffff;
-        font-size: 12px;
+        font-size: 16px;
         font-weight: 500;
         cursor: pointer;
-        transition: all 0.2s ease;
-        -webkit-app-region: no-drag;
-        display: flex;
+        transition: opacity 0.2s ease, background 0.2s ease, transform 0.2s ease;
+        -webkit-app-region: no-drag !important;
+        display: flex !important;
         align-items: center;
         justify-content: center;
-        opacity: 0;
-        visibility: hidden;
+        opacity: 0.3;
+        visibility: visible;
         line-height: 1;
+        z-index: 10000;
+        pointer-events: auto !important;
+        user-select: none;
+        -webkit-user-select: none;
+        min-width: 20px;
+        min-height: 20px;
       }
 
       .widget-close-btn:hover {
         background: rgba(255, 255, 255, 0.25);
         border-color: rgba(255, 255, 255, 0.4);
         transform: scale(1.1);
+        opacity: 1 !important;
+      }
+      
+      .widget-container:hover .widget-close-btn {
+        opacity: 0.5;
+      }
+      
+      .widget-container:hover .widget-close-btn:hover {
+        opacity: 1;
       }
 
       .widget-close-btn:active {
@@ -162,7 +175,7 @@
         <div class="widget-header">
           <div class="widget-year" id="year">2026</div>
           <div class="widget-percentage" id="percentage">0%</div>
-          <button class="widget-close-btn" id="closeBtn" title="关闭">×</button>
+          <button class="widget-close-btn" id="closeBtn" title="隐藏">×</button>
         </div>
 
         <div class="widget-progress-grid" id="progressGrid"></div>
@@ -238,18 +251,99 @@
         }
       }
 
-      // 关闭按钮事件
-      document.getElementById('closeBtn').addEventListener('click', () => {
-        if (window.electron && window.electron.closeWindow) {
-          window.electron.closeWindow();
-        } else {
-          // 如果不在 Electron 环境中，尝试关闭窗口
-          window.close();
+      // 隐藏窗口按钮事件
+      let isHiding = false;
+      
+      function hideWindow() {
+        if (isHiding) {
+          return;
         }
-      });
-
+        
+        isHiding = true;
+        console.log('[Widget] 开始隐藏窗口');
+        
+        // 检查 electron API 是否可用
+        if (typeof window !== 'undefined' && window.electron) {
+          console.log('[Widget] window.electron 可用');
+          
+          if (window.electron.closeWindow) {
+            console.log('[Widget] 调用 window.electron.closeWindow()');
+            window.electron.closeWindow()
+              .then((result) => {
+                console.log('[Widget] 隐藏成功:', result);
+                isHiding = false;
+              })
+              .catch((err) => {
+                console.error('[Widget] 隐藏失败:', err);
+                isHiding = false;
+              });
+          } else {
+            console.error('[Widget] window.electron.closeWindow 不存在');
+            console.log('[Widget] window.electron 对象:', Object.keys(window.electron));
+            isHiding = false;
+          }
+        } else {
+          console.error('[Widget] window.electron 不可用');
+          isHiding = false;
+        }
+      }
+      
+      // 绑定关闭按钮事件
+      function setupCloseButton() {
+        const closeBtn = document.getElementById('closeBtn');
+        if (closeBtn) {
+          console.log('[Widget] 找到关闭按钮，绑定事件');
+          
+          // 使用 onclick 属性，更可靠
+          closeBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[Widget] 关闭按钮被点击');
+            hideWindow();
+            return false;
+          };
+          
+          // 也添加事件监听器作为备用
+          closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[Widget] 关闭按钮 click 事件');
+            hideWindow();
+            return false;
+          });
+          
+          console.log('[Widget] 关闭按钮事件已绑定');
+        } else {
+          console.error('[Widget] 关闭按钮未找到');
+        }
+      }
+      
+      // 等待 DOM 和 electron API 都准备好
+      function init() {
+        updateDisplay();
+        
+        // 等待 electron API 准备好
+        if (typeof window !== 'undefined' && window.electron) {
+          setupCloseButton();
+        } else {
+          // 如果 electron API 还没准备好，等待一下
+          setTimeout(() => {
+            if (typeof window !== 'undefined' && window.electron) {
+              setupCloseButton();
+            } else {
+              console.warn('[Widget] electron API 未准备好，延迟绑定');
+              setTimeout(setupCloseButton, 500);
+            }
+          }, 200);
+        }
+      }
+      
       // 初始化
-      updateDisplay();
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
       
       // 每分钟更新一次
       setInterval(() => {

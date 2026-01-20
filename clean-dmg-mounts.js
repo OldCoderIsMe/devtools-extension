@@ -54,12 +54,6 @@ try {
 
 // 强制清理：尝试卸载所有可能的挂载点
 try {
-  // 使用 hdiutil 查找所有相关镜像
-  const hdiutilInfo = execSync('hdiutil info 2>/dev/null || true', { 
-    encoding: 'utf8',
-    stdio: 'pipe'
-  });
-  
   // 查找所有挂载的卷
   const volumes = execSync('ls -1 /Volumes 2>/dev/null || true', { 
     encoding: 'utf8',
@@ -69,13 +63,17 @@ try {
   volumes.split('\n').forEach((vol) => {
     const trimmed = vol.trim();
     if (trimmed && (trimmed.includes(productName) || trimmed.includes('DevTools'))) {
-      console.log(`[清理] 尝试卸载挂载点: "${trimmed}"`);
-      try {
-        execSync(`hdiutil detach "/Volumes/${trimmed}" -force 2>/dev/null || true`, {
-          stdio: 'ignore',
-        });
-      } catch (error) {
-        // 忽略错误
+      const volumePath = `/Volumes/${trimmed}`;
+      // 先检查挂载点是否存在
+      if (fs.existsSync(volumePath)) {
+        console.log(`[清理] 尝试卸载挂载点: "${trimmed}"`);
+        try {
+          execSync(`hdiutil detach "${volumePath}" -force -quiet 2>/dev/null || true`, {
+            stdio: 'ignore',
+          });
+        } catch (error) {
+          // 忽略错误，挂载点可能已经不存在
+        }
       }
     }
   });
@@ -102,12 +100,16 @@ try {
     finalCheck.trim().split('\n').forEach((vol) => {
       const trimmed = vol.trim();
       if (trimmed) {
-        try {
-          execSync(`hdiutil detach "/Volumes/${trimmed}" -force 2>/dev/null || true`, {
-            stdio: 'ignore',
-          });
-        } catch (error) {
-          // 忽略错误
+        const volumePath = `/Volumes/${trimmed}`;
+        // 先检查挂载点是否存在
+        if (fs.existsSync(volumePath)) {
+          try {
+            execSync(`hdiutil detach "${volumePath}" -force -quiet 2>/dev/null || true`, {
+              stdio: 'ignore',
+            });
+          } catch (error) {
+            // 忽略错误，挂载点可能已经不存在
+          }
         }
       }
     });

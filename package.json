@@ -35,7 +35,8 @@
     "appId": "com.devtools.suite",
     "productName": "DevTools Suite",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "afterPack": "./electron/after-pack.js",
     "files": [
@@ -93,7 +94,11 @@
           "path": "/Applications"
         }
       ],
-      "format": "UDZO"
+      "format": "UDZO",
+      "window": {
+        "width": 540,
+        "height": 380
+      }
     }
   }
 }
