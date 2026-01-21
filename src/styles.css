@@ -848,3 +848,107 @@ img {
   color: var(--text-tertiary);
   opacity: 0.5;
 }
+
+/* JSON 放大显示模态框 */
+.json-expanded-modal {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  margin: 0;
+  box-sizing: border-box;
+  animation: fadeIn 0.2s ease-out;
+  overflow: auto;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.json-expanded-content {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-color);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  margin: auto;
+  animation: slideUp 0.3s ease-out;
+  position: relative;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.json-expanded-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.json-expanded-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.json-expanded-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.json-expanded-body {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+  min-height: 200px;
+}
+
+.json-expanded-text {
+  margin: 0;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background: var(--bg-input);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color-input);
+  overflow-x: auto;
+}
+
+/* 浅色主题下的模态框样式 */
+.app.light-theme .json-expanded-modal {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.app.light-theme .json-expanded-text {
+  background: var(--bg-input);
+}

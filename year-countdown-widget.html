@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>年度倒计时 - DevTools Suite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      }
+
+      #app {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+      }
+
+      .widget-container {
+        width: 100%;
+        max-width: 368px;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(30px) saturate(180%);
+        -webkit-backdrop-filter: blur(30px) saturate(180%);
+        border-radius: 16px;
+        padding: 16px 18px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        -webkit-app-region: drag; /* 支持窗口拖动 */
+        position: relative;
+      }
+
+
+      .widget-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        -webkit-app-region: no-drag; /* 头部区域不可拖动 */
+        position: relative;
+        z-index: 1;
+      }
+
+      .widget-year {
+        font-size: 12px;
+        font-weight: 600;
+        color: #ffffff;
+      }
+
+      .widget-percentage {
+        font-size: 12px;
+        font-weight: 600;
+        color: #ffffff;
+      }
+
+      .widget-progress-grid {
+        display: grid;
+        grid-template-columns: repeat(40, 1fr);
+        gap: 1.5px;
+        margin-bottom: 12px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        -webkit-app-region: no-drag; /* 进度网格区域不可拖动 */
+      }
+
+      .progress-dot {
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: #000000;
+        transition: all 0.2s ease;
+        min-height: 3px;
+      }
+
+      .progress-dot.completed {
+        background: #ffffff;
+      }
+
+      .widget-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        -webkit-app-region: no-drag; /* 统计区域不可拖动 */
+      }
+
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-label {
+        font-size: 6px;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      .stat-value {
+        font-size: 9px;
+        font-weight: 600;
+        color: #ffffff;
+      }
+
+      .widget-close-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        margin: 0;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: opacity 0.2s ease, background 0.2s ease, transform 0.2s ease;
+        -webkit-app-region: no-drag !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.3;
+        visibility: visible;
+        line-height: 1;
+        z-index: 10000;
+        pointer-events: auto !important;
+        user-select: none;
+        -webkit-user-select: none;
+        min-width: 20px;
+        min-height: 20px;
+      }
+
+      .widget-close-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: scale(1.1);
+        opacity: 1 !important;
+      }
+      
+      .widget-container:hover .widget-close-btn {
+        opacity: 0.5;
+      }
+      
+      .widget-container:hover .widget-close-btn:hover {
+        opacity: 1;
+      }
+
+      .widget-close-btn:active {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(0.95);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="widget-container" id="widget">
+        <div class="widget-header">
+          <div class="widget-year" id="year">2026</div>
+          <div class="widget-percentage" id="percentage">0%</div>
+          <button class="widget-close-btn" id="closeBtn" title="隐藏">×</button>
+        </div>
+
+        <div class="widget-progress-grid" id="progressGrid"></div>
+
+        <div class="widget-stats">
+          <div class="stat-item">
+            <div class="stat-label">已过天数</div>
+            <div class="stat-value" id="passedDays">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">总天数</div>
+            <div class="stat-value" id="totalDays">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">剩余天数</div>
+            <div class="stat-value" id="remainingDays">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">今日日期</div>
+            <div class="stat-value" id="todayDate">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      // 计算年度数据
+      function calculateYearData() {
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const yearStart = new Date(currentYear, 0, 1);
+        const yearEnd = new Date(currentYear, 11, 31);
+        
+        const totalDays = Math.ceil((yearEnd.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        const diffTime = today.getTime() - yearStart.getTime();
+        const passedDays = Math.max(0, Math.min(Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1, totalDays));
+        const remainingDays = Math.max(0, totalDays - passedDays);
+        const progressPercentage = totalDays > 0 ? Math.round((passedDays / totalDays) * 100) : 0;
+        
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayDate = `${month}-${day}`;
+        
+        return {
+          currentYear,
+          totalDays,
+          passedDays,
+          remainingDays,
+          progressPercentage,
+          todayDate
+        };
+      }
+
+      // 更新显示
+      function updateDisplay() {
+        const data = calculateYearData();
+        
+        document.getElementById('year').textContent = data.currentYear;
+        document.getElementById('percentage').textContent = data.progressPercentage + '%';
+        document.getElementById('passedDays').textContent = data.passedDays;
+        document.getElementById('totalDays').textContent = data.totalDays;
+        document.getElementById('remainingDays').textContent = data.remainingDays;
+        document.getElementById('todayDate').textContent = data.todayDate;
+        
+        // 更新进度网格
+        const progressGrid = document.getElementById('progressGrid');
+        progressGrid.innerHTML = '';
+        
+        for (let i = 0; i < data.totalDays; i++) {
+          const dot = document.createElement('div');
+          dot.className = 'progress-dot' + (i < data.passedDays ? ' completed' : '');
+          dot.title = `第 ${i + 1} 天`;
+          progressGrid.appendChild(dot);
+        }
+      }
+
+      // 隐藏窗口按钮事件
+      let isHiding = false;
+      
+      function hideWindow() {
+        if (isHiding) {
+          return;
+        }
+        
+        isHiding = true;
+        console.log('[Widget] 开始隐藏窗口');
+        
+        // 检查 electron API 是否可用
+        if (typeof window !== 'undefined' && window.electron) {
+          console.log('[Widget] window.electron 可用');
+          
+          if (window.electron.closeWindow) {
+            console.log('[Widget] 调用 window.electron.closeWindow()');
+            window.electron.closeWindow()
+              .then((result) => {
+                console.log('[Widget] 隐藏成功:', result);
+                isHiding = false;
+              })
+              .catch((err) => {
+                console.error('[Widget] 隐藏失败:', err);
+                isHiding = false;
+              });
+          } else {
+            console.error('[Widget] window.electron.closeWindow 不存在');
+            console.log('[Widget] window.electron 对象:', Object.keys(window.electron));
+            isHiding = false;
+          }
+        } else {
+          console.error('[Widget] window.electron 不可用');
+          isHiding = false;
+        }
+      }
+      
+      // 绑定关闭按钮事件
+      function setupCloseButton() {
+        const closeBtn = document.getElementById('closeBtn');
+        if (closeBtn) {
+          console.log('[Widget] 找到关闭按钮，绑定事件');
+          
+          // 使用 onclick 属性，更可靠
+          closeBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[Widget] 关闭按钮被点击');
+            hideWindow();
+            return false;
+          };
+          
+          // 也添加事件监听器作为备用
+          closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[Widget] 关闭按钮 click 事件');
+            hideWindow();
+            return false;
+          });
+          
+          console.log('[Widget] 关闭按钮事件已绑定');
+        } else {
+          console.error('[Widget] 关闭按钮未找到');
+        }
+      }
+      
+      // 等待 DOM 和 electron API 都准备好
+      function init() {
+        updateDisplay();
+        
+        // 等待 electron API 准备好
+        if (typeof window !== 'undefined' && window.electron) {
+          setupCloseButton();
+        } else {
+          // 如果 electron API 还没准备好，等待一下
+          setTimeout(() => {
+            if (typeof window !== 'undefined' && window.electron) {
+              setupCloseButton();
+            } else {
+              console.warn('[Widget] electron API 未准备好，延迟绑定');
+              setTimeout(setupCloseButton, 500);
+            }
+          }, 200);
+        }
+      }
+      
+      // 初始化
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+      
+      // 每分钟更新一次
+      setInterval(() => {
+        updateDisplay();
+      }, 60000);
+    </script>
+  </body>
+</html>

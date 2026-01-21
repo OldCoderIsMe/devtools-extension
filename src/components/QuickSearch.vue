@@ -2,7 +2,6 @@
   <div class="quick-search-container">
     <div class="quick-search-window">
       <div class="quick-search-header">
-        <div class="header-drag-area"></div>
         <input
           ref="inputRef"
           v-model="input"
@@ -113,7 +112,11 @@ watch(input, () => {
     suggestions.value = [];
     // 如果有输入且不是显示建议状态，执行命令
     if (trimmed) {
-      result.value = parseAndExecuteCommand(trimmed);
+      parseAndExecuteCommand(trimmed).then(res => {
+        result.value = res;
+      }).catch(err => {
+        result.value = { success: false, error: err.message || '执行命令失败' };
+      });
     } else {
       result.value = null;
     }
@@ -263,6 +266,8 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  -webkit-app-region: drag;
+  cursor: move;
 }
 
 .quick-search-header {
@@ -273,16 +278,6 @@ onUnmounted(() => {
   position: relative;
   flex-shrink: 0;
   z-index: 10;
-}
-
-.header-drag-area {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 40px;
-  -webkit-app-region: drag;
-  cursor: move;
 }
 
 .quick-search-input {
@@ -298,6 +293,7 @@ onUnmounted(() => {
   position: relative;
   z-index: 1;
   -webkit-app-region: no-drag;
+  cursor: text;
 }
 
 .quick-search-input:focus {
@@ -365,6 +361,7 @@ onUnmounted(() => {
   border-radius: 6px;
   transition: background 0.2s;
   cursor: pointer;
+  -webkit-app-region: no-drag;
 }
 
 .hint-item:hover {
@@ -453,6 +450,7 @@ onUnmounted(() => {
   cursor: pointer;
   font-size: 13px;
   transition: all 0.2s;
+  -webkit-app-region: no-drag;
 }
 
 .copy-btn:hover {
@@ -488,6 +486,7 @@ onUnmounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: all 0.2s;
+  -webkit-app-region: no-drag;
 }
 
 .suggestion-item:hover,

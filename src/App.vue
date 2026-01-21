@@ -99,6 +99,11 @@
   import RegexTool from './tools/RegexTool.vue';
   import QrcodeTool from './tools/QrcodeTool.vue';
   import DiffTool from './tools/DiffTool.vue';
+  import UnicodeTool from './tools/UnicodeTool.vue';
+  import FileMoveTool from './tools/FileMoveTool.vue';
+  import SignatureTool from './tools/SignatureTool.vue';
+  import YearCountdownTool from './tools/YearCountdownTool.vue';
+  import MarkdownTool from './tools/MarkdownTool.vue';
 import SettingsPanel from './components/SettingsPanel.vue';
   
   interface ToolMeta {
@@ -108,17 +113,33 @@ import SettingsPanel from './components/SettingsPanel.vue';
     component: any;
   }
   
-  const tools = ref<ToolMeta[]>([
+  // 检测是否在 Electron 环境中
+  const isElectron = typeof window !== 'undefined' && 
+    (window as any).electron !== undefined;
+  
+  // 基础工具列表
+  const baseTools: ToolMeta[] = [
     { id: 'url', name: 'URL 编码 / 解码', emoji: '🔗', component: markRaw(UrlTool) },
     { id: 'md5', name: '加密/哈希工具', emoji: '🔐', component: markRaw(Md5Tool) },
     { id: 'time', name: '时间戳转换', emoji: '⏰', component: markRaw(TimestampTool) },
     { id: 'json', name: 'JSON 格式化', emoji: '📄', component: markRaw(JsonTool) },
     { id: 'text', name: '文本处理', emoji: '📝', component: markRaw(TextTool) },
-    { id: 'uuid', name: 'UUID/随机字符串', emoji: '🆔', component: markRaw(UuidTool) },
+    { id: 'unicode', name: 'Unicode 转换', emoji: '🔤', component: markRaw(UnicodeTool) },
+    { id: 'uuid', name: '密码/字符串/UUID生成', emoji: '🆔', component: markRaw(UuidTool) },
     { id: 'regex', name: '正则表达式', emoji: '🔍', component: markRaw(RegexTool) },
     { id: 'qrcode', name: '二维码生成', emoji: '📱', component: markRaw(QrcodeTool) },
     { id: 'diff', name: '文本差异对比', emoji: '🔄', component: markRaw(DiffTool) },
-  ]);
+    { id: 'yearcountdown', name: '年度倒计时', emoji: '📅', component: markRaw(YearCountdownTool) },
+    { id: 'markdown', name: 'Markdown 处理', emoji: '📝', component: markRaw(MarkdownTool) },
+  ];
+
+  // Electron 环境下的额外工具
+  const electronTools: ToolMeta[] = isElectron ? [
+    { id: 'filemove', name: '文件移动', emoji: '📁', component: markRaw(FileMoveTool) },
+    { id: 'signature', name: '签名处理', emoji: '✍️', component: markRaw(SignatureTool) },
+  ] : [];
+
+  const tools = ref<ToolMeta[]>([...baseTools, ...electronTools]);
   
   const activeToolId = ref<string>(tools.value[0].id);
   
@@ -139,10 +160,6 @@ import SettingsPanel from './components/SettingsPanel.vue';
     showDeveloperInfo.value = false;
     showSettings.value = false;
   }
-  
-  // 检测是否在 Electron 环境中
-  const isElectron = typeof window !== 'undefined' && 
-    (window as any).electron !== undefined;
   
   // 检测是否在 Chrome 扩展的 DevTools 面板环境中
   const isExtensionDevTools = typeof chrome !== 'undefined' && 

@@ -1,29 +1,31 @@
 {
   "name": "devtools-extension",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "功能丰富的开发工具集合，支持 Chrome 扩展、网页应用和 macOS 桌面应用。包含 URL 编码、加密哈希、时间戳转换、JSON 格式化、文本处理、UUID 生成、正则测试、二维码生成、文本对比等 9 大工具。所有计算本地完成，保护隐私安全。支持快速搜索弹窗和快捷键自定义。",
   "private": false,
   "main": "electron/main.js",
   "scripts": {
-    "dev": "node generate-favicon.js && vite",
-    "build": "vite build && node copy-manifest.js",
+    "dev": "node scripts/generate-favicon.js && vite",
+    "build": "vite build && node scripts/copy-manifest.js",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",
-    "package": "npm run build && node package-extension.js",
-    "electron:dev": "concurrently \"npm run dev\" \"node wait-for-vite.js\"",
+    "package": "npm run build && node scripts/package-extension.js",
+    "electron:dev": "concurrently \"npm run dev\" \"node scripts/wait-for-vite.js\"",
     "electron:build": "ELECTRON=1 npm run build && electron-builder",
-    "electron:build:mac": "ELECTRON=1 npm run build && node clean-dmg-mounts.js && electron-builder --mac",
+    "electron:build:mac": "ELECTRON=1 npm run build && node scripts/clean-dmg-mounts.js && sleep 2 && electron-builder --mac",
     "electron:pack": "npm run build && electron-builder --dir"
   },
   "dependencies": {
     "crypto-js": "^4.2.0",
+    "marked": "^17.0.1",
     "qrcode": "^1.5.3",
     "vue": "^3.5.0"
   },
   "devDependencies": {
+    "@types/marked": "^5.0.2",
     "@vitejs/plugin-vue": "^5.1.0",
     "concurrently": "^8.2.2",
-    "electron": "^28.0.0",
+    "electron": "^31.0.0",
     "electron-builder": "^24.9.1",
     "sharp": "^0.33.5",
     "typescript": "^5.5.0",
@@ -35,8 +37,10 @@
     "appId": "com.devtools.suite",
     "productName": "DevTools Suite",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
+    "afterPack": "./electron/after-pack.js",
     "files": [
       "dist/**/*",
       "electron/**/*",
@@ -68,13 +72,16 @@
       "entitlementsInherit": "electron/entitlements.mac.plist",
       "identity": null,
       "extendInfo": {
-        "CFBundleIconFile": "icon.icns"
+        "CFBundleIconFile": "icon.icns",
+        "CFBundleName": "DevTools Suite",
+        "CFBundleDisplayName": "DevTools Suite",
+        "CFBundleExecutable": "DevTools Suite",
+        "LSApplicationCategoryType": "public.app-category.developer-tools"
       }
     },
     "dmg": {
       "title": "${productName} ${version}",
       "icon": "icons/icon.icns",
-      "background": null,
       "sign": false,
       "contents": [
         {
@@ -89,6 +96,7 @@
           "path": "/Applications"
         }
       ],
+      "format": "UDZO",
       "window": {
         "width": 540,
         "height": 380

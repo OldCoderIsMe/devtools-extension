@@ -102,12 +102,128 @@
           <p class="warning">⚠️ 注意：如果快捷键已被系统或其他应用占用，注册可能会失败</p>
         </div>
       </div>
+
+      <!-- 文件移动配对管理（仅 Electron 环境） -->
+      <div v-if="isElectron" class="settings-section">
+        <h3 class="section-title">📁 文件移动配对</h3>
+        <p class="section-desc">配置路径配对，使用快捷指令快速执行文件移动操作</p>
+        
+        <div v-if="fileMovePairs.length === 0" class="empty-state">
+          <p>暂无配置的路径配对</p>
+          <p class="empty-hint">点击下方"添加配对"按钮开始配置</p>
+        </div>
+
+        <div v-else class="pairs-list">
+          <div v-for="(pair, index) in fileMovePairs" :key="pair.alias" class="pair-item">
+            <div class="pair-header">
+              <div class="pair-info">
+                <span class="pair-alias">{{ pair.alias }}</span>
+                <span v-if="pair.description" class="pair-desc">{{ pair.description }}</span>
+              </div>
+              <div class="pair-actions">
+                <button class="btn-icon" @click="editPair(index)" title="编辑">✏️</button>
+                <button class="btn-icon" @click="deletePair(pair.alias)" title="删除">🗑️</button>
+              </div>
+            </div>
+            <div class="pair-paths">
+              <div class="path-item">
+                <span class="path-label">源目录:</span>
+                <span class="path-value">{{ pair.sourcePath }}</span>
+              </div>
+              <div class="path-item">
+                <span class="path-label">目标目录:</span>
+                <span class="path-value">{{ pair.targetPath }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 添加/编辑配对表单 -->
+        <div v-if="showPairForm" class="pair-form">
+          <div class="form-item">
+            <label class="form-label">别名 *</label>
+            <input
+              v-model="editingPair.alias"
+              class="form-input"
+              type="text"
+              placeholder="例如: a2b"
+              :disabled="isEditing"
+            />
+            <p class="form-hint">用于快捷指令，例如: move a2b</p>
+          </div>
+
+          <div class="form-item">
+            <label class="form-label">源目录 *</label>
+            <div class="path-input-wrapper">
+              <input
+                v-model="editingPair.sourcePath"
+                class="form-input"
+                type="text"
+                placeholder="选择源目录"
+                readonly
+              />
+              <button class="btn secondary" @click="selectSourcePath">选择目录</button>
+            </div>
+            <p class="form-hint">要复制的源文件目录</p>
+          </div>
+
+          <div class="form-item">
+            <label class="form-label">目标目录 *</label>
+            <div class="path-input-wrapper">
+              <input
+                v-model="editingPair.targetPath"
+                class="form-input"
+                type="text"
+                placeholder="选择目标目录"
+                readonly
+              />
+              <button class="btn secondary" @click="selectTargetPath">选择目录</button>
+            </div>
+            <p class="form-hint">清空后复制文件的目标目录</p>
+          </div>
+
+          <div class="form-item">
+            <label class="form-label">描述（可选）</label>
+            <input
+              v-model="editingPair.description"
+              class="form-input"
+              type="text"
+              placeholder="例如: 备份项目文件"
+            />
+          </div>
+
+          <div class="form-actions">
+            <button class="btn secondary" @click="cancelEditPair">取消</button>
+            <button class="btn" @click="savePair" :disabled="!canSavePair">
+              {{ isEditing ? '更新' : '添加' }}
+            </button>
+          </div>
+        </div>
+
+        <div v-else class="pair-actions">
+          <button class="btn" @click="addNewPair">+ 添加配对</button>
+        </div>
+
+        <div v-if="fileMoveMessage" :class="['message', fileMoveMessageType]">
+          {{ fileMoveMessage }}
+        </div>
+
+        <div class="format-help" style="margin-top: 16px;">
+          <p><strong>使用说明：</strong></p>
+          <ul>
+            <li>配置配对后，在快捷指令中输入 <code>move 别名</code> 即可执行</li>
+            <li>操作会清空目标目录，然后复制源目录的所有文件到目标目录</li>
+            <li>输入 <code>move</code> 可查看所有配置的配对</li>
+          </ul>
+          <p class="warning">⚠️ 警告：此操作会删除目标目录中的所有文件，请谨慎使用</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 const emit = defineEmits(['close']);
 
@@ -122,6 +238,20 @@ const message = ref('');
 const messageType = ref<'success' | 'error'>('success');
 const shortcut1Input = ref<HTMLInputElement | null>(null);
 const shortcut2Input = ref<HTMLInputElement | null>(null);
+
+// 文件移动配对相关
+const isElectron = ref(false);
+const fileMovePairs = ref<any[]>([]);
+const showPairForm = ref(false);
+const isEditing = ref(false);
+const editingPair = ref({
+  alias: '',
+  sourcePath: '',
+  targetPath: '',
+  description: '',
+});
+const fileMoveMessage = ref('');
+const fileMoveMessageType = ref<'success' | 'error'>('success');
 
 let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
 
@@ -285,8 +415,175 @@ function showMessage(text: string, type: 'success' | 'error' = 'success') {
   }, 3000);
 }
 
+// 文件移动配对相关函数
+async function loadFileMovePairs() {
+  const electron = (window as any).electron;
+  if (electron && electron.fileMove) {
+    try {
+      fileMovePairs.value = await electron.fileMove.getPairs();
+    } catch (error) {
+      console.error('加载文件移动配对失败:', error);
+    }
+  }
+}
+
+function addNewPair() {
+  editingPair.value = {
+    alias: '',
+    sourcePath: '',
+    targetPath: '',
+    description: '',
+  };
+  isEditing.value = false;
+  showPairForm.value = true;
+}
+
+function editPair(index: number) {
+  editingPair.value = { ...fileMovePairs.value[index] };
+  isEditing.value = true;
+  showPairForm.value = true;
+}
+
+function cancelEditPair() {
+  showPairForm.value = false;
+  isEditing.value = false;
+  editingPair.value = {
+    alias: '',
+    sourcePath: '',
+    targetPath: '',
+    description: '',
+  };
+  fileMoveMessage.value = '';
+}
+
+async function selectSourcePath() {
+  const electron = (window as any).electron;
+  if (!electron?.fileMove) {
+    showFileMoveMessage('Electron 环境不可用', 'error');
+    return;
+  }
+
+  try {
+    const result = await electron.fileMove.selectDirectory('选择源目录');
+    if (!result.canceled && result.path) {
+      editingPair.value.sourcePath = result.path;
+    }
+  } catch (error) {
+    console.error('选择目录失败:', error);
+    showFileMoveMessage('选择目录失败', 'error');
+  }
+}
+
+async function selectTargetPath() {
+  const electron = (window as any).electron;
+  if (!electron?.fileMove) {
+    showFileMoveMessage('Electron 环境不可用', 'error');
+    return;
+  }
+
+  try {
+    const result = await electron.fileMove.selectDirectory('选择目标目录');
+    if (!result.canceled && result.path) {
+      editingPair.value.targetPath = result.path;
+    }
+  } catch (error) {
+    console.error('选择目录失败:', error);
+    showFileMoveMessage('选择目录失败', 'error');
+  }
+}
+
+const canSavePair = computed(() => {
+  return editingPair.value.alias.trim() &&
+         editingPair.value.sourcePath.trim() &&
+         editingPair.value.targetPath.trim();
+});
+
+async function savePair() {
+  const electron = (window as any).electron;
+  if (!electron?.fileMove) {
+    showFileMoveMessage('Electron 环境不可用', 'error');
+    return;
+  }
+
+  if (!canSavePair.value) {
+    showFileMoveMessage('请填写所有必填项', 'error');
+    return;
+  }
+
+  try {
+    const pair = {
+      alias: editingPair.value.alias.trim(),
+      sourcePath: editingPair.value.sourcePath.trim(),
+      targetPath: editingPair.value.targetPath.trim(),
+      description: editingPair.value.description.trim() || undefined,
+    };
+
+    if (isEditing.value) {
+      const result = await electron.fileMove.updatePair(editingPair.value.alias, pair);
+      if (result.success) {
+        showFileMoveMessage('配对已更新', 'success');
+        await loadFileMovePairs();
+        cancelEditPair();
+      } else {
+        showFileMoveMessage(result.error || '更新失败', 'error');
+      }
+    } else {
+      const result = await electron.fileMove.addPair(pair);
+      if (result.success) {
+        showFileMoveMessage('配对已添加', 'success');
+        await loadFileMovePairs();
+        cancelEditPair();
+      } else {
+        showFileMoveMessage(result.error || '添加失败', 'error');
+      }
+    }
+  } catch (error: any) {
+    console.error('保存配对失败:', error);
+    showFileMoveMessage(error.message || '保存失败', 'error');
+  }
+}
+
+async function deletePair(alias: string) {
+  if (!confirm(`确定要删除配对 "${alias}" 吗？`)) {
+    return;
+  }
+
+  const electron = (window as any).electron;
+  if (!electron?.fileMove) {
+    showFileMoveMessage('Electron 环境不可用', 'error');
+    return;
+  }
+
+  try {
+    const result = await electron.fileMove.deletePair(alias);
+    if (result.success) {
+      showFileMoveMessage('配对已删除', 'success');
+      await loadFileMovePairs();
+    } else {
+      showFileMoveMessage(result.error || '删除失败', 'error');
+    }
+  } catch (error: any) {
+    console.error('删除配对失败:', error);
+    showFileMoveMessage(error.message || '删除失败', 'error');
+  }
+}
+
+function showFileMoveMessage(text: string, type: 'success' | 'error' = 'success') {
+  fileMoveMessage.value = text;
+  fileMoveMessageType.value = type;
+  setTimeout(() => {
+    fileMoveMessage.value = '';
+  }, 3000);
+}
+
 onMounted(() => {
   loadShortcuts();
+  
+  // 检查是否为 Electron 环境
+  isElectron.value = !!(window as any).electron?.fileMove;
+  if (isElectron.value) {
+    loadFileMovePairs();
+  }
 });
 
 onUnmounted(() => {
@@ -543,5 +840,175 @@ onUnmounted(() => {
   padding-top: 16px;
   border-top: 1px solid var(--border-color);
   color: #ff9800;
+}
+
+/* 文件移动配对样式 */
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-tertiary);
+}
+
+.empty-hint {
+  font-size: 12px;
+  margin-top: 8px;
+  color: var(--text-quaternary);
+}
+
+.pairs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pair-item {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color-input);
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s;
+}
+
+.pair-item:hover {
+  border-color: var(--border-color-focus);
+  background: var(--bg-input-focus);
+}
+
+.pair-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.pair-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pair-alias {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
+.pair-desc {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.pair-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0.7;
+}
+
+.btn-icon:hover {
+  opacity: 1;
+  background: var(--bg-input);
+}
+
+.pair-paths {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.path-item {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.path-label {
+  color: var(--text-tertiary);
+  min-width: 80px;
+}
+
+.path-value {
+  color: var(--text-secondary);
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  word-break: break-all;
+}
+
+.pair-form {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color-input);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.form-input {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color-input);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--border-color-focus);
+  background: var(--bg-input-focus);
+}
+
+.form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.path-input-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.path-input-wrapper .form-input {
+  flex: 1;
+}
+
+.form-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-quaternary);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.pair-actions {
+  margin-top: 16px;
 }
 </style>

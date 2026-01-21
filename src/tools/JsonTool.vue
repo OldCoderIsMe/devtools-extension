@@ -45,14 +45,38 @@
         <button class="btn secondary" @click="copyOutput" :disabled="!output">
           复制结果
         </button>
+        <button 
+          v-if="output" 
+          class="btn secondary" 
+          @click="showExpanded = true"
+          title="放大显示"
+        >
+          放大显示
+        </button>
         <span v-if="message" class="hint">{{ message }}</span>
+      </div>
+    </div>
+
+    <!-- 放大显示模态框 -->
+    <div v-if="showExpanded" class="json-expanded-modal" @click="handleModalClick">
+      <div class="json-expanded-content" @click.stop :style="{ width: modalContentWidth }">
+        <div class="json-expanded-header">
+          <h3>JSON 格式化结果</h3>
+          <div class="json-expanded-actions">
+            <button class="btn secondary" @click="copyOutputInModal">复制</button>
+            <button class="btn secondary" @click="showExpanded = false">关闭</button>
+          </div>
+        </div>
+        <div class="json-expanded-body">
+          <pre class="json-expanded-text">{{ output }}</pre>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import {
   formatJson,
   compressJson,
@@ -68,6 +92,64 @@ const input = ref('');
 const output = ref('');
 const message = ref('');
 const validationResult = ref<{ valid: boolean; error?: string } | null>(null);
+const showExpanded = ref(false);
+const modalContentWidth = ref<string>('90%');
+
+// ESC 键关闭模态框
+function handleEscapeKey(event: KeyboardEvent) {
+  if (event.key === 'Escape' && showExpanded.value) {
+    showExpanded.value = false;
+  }
+}
+
+// 点击模态框外部区域关闭
+function handleModalClick(event: MouseEvent) {
+  // 如果点击的是模态框背景（不是内容区域），则关闭
+  if (event.target === event.currentTarget) {
+    showExpanded.value = false;
+  }
+}
+
+// 计算主编辑区域的宽度
+function calculateMainWidth() {
+  const mainElement = document.querySelector('.main');
+  if (mainElement) {
+    const rect = mainElement.getBoundingClientRect();
+    // 减去主区域的 padding (左右各 16px)
+    const width = rect.width - 32;
+    modalContentWidth.value = `${width}px`;
+  } else {
+    modalContentWidth.value = '90%';
+  }
+}
+
+// 监听窗口大小变化
+function handleResize() {
+  if (showExpanded.value) {
+    calculateMainWidth();
+  }
+}
+
+// 当显示弹出框时，计算宽度
+watch(showExpanded, (newVal: boolean) => {
+  if (newVal) {
+    // 使用 setTimeout 确保 DOM 已更新
+    setTimeout(() => {
+      calculateMainWidth();
+    }, 0);
+    window.addEventListener('resize', handleResize);
+  } else {
+    window.removeEventListener('resize', handleResize);
+  }
+});
+
+onMounted(() => {
+  window.addEventListener('keydown', handleEscapeKey);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscapeKey);
+});
 
 function handleProcess() {
   message.value = '';
@@ -114,6 +196,20 @@ async function copyOutput() {
   try {
     await navigator.clipboard.writeText(output.value);
     message.value = '已复制到剪贴板';
+  } catch {
+    message.value = '复制失败，请手动复制';
+  }
+}
+
+async function copyOutputInModal() {
+  if (!output.value) return;
+  try {
+    await navigator.clipboard.writeText(output.value);
+    message.value = '已复制到剪贴板';
+    // 短暂延迟后关闭提示
+    setTimeout(() => {
+      message.value = '';
+    }, 2000);
   } catch {
     message.value = '复制失败，请手动复制';
   }
