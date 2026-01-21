@@ -103,6 +103,7 @@
   import FileMoveTool from './tools/FileMoveTool.vue';
   import SignatureTool from './tools/SignatureTool.vue';
   import YearCountdownTool from './tools/YearCountdownTool.vue';
+  import MarkdownTool from './tools/MarkdownTool.vue';
 import SettingsPanel from './components/SettingsPanel.vue';
   
   interface ToolMeta {
@@ -124,11 +125,12 @@ import SettingsPanel from './components/SettingsPanel.vue';
     { id: 'json', name: 'JSON 格式化', emoji: '📄', component: markRaw(JsonTool) },
     { id: 'text', name: '文本处理', emoji: '📝', component: markRaw(TextTool) },
     { id: 'unicode', name: 'Unicode 转换', emoji: '🔤', component: markRaw(UnicodeTool) },
-    { id: 'uuid', name: 'UUID/随机字符串', emoji: '🆔', component: markRaw(UuidTool) },
+    { id: 'uuid', name: '密码/字符串/UUID生成', emoji: '🆔', component: markRaw(UuidTool) },
     { id: 'regex', name: '正则表达式', emoji: '🔍', component: markRaw(RegexTool) },
     { id: 'qrcode', name: '二维码生成', emoji: '📱', component: markRaw(QrcodeTool) },
     { id: 'diff', name: '文本差异对比', emoji: '🔄', component: markRaw(DiffTool) },
     { id: 'yearcountdown', name: '年度倒计时', emoji: '📅', component: markRaw(YearCountdownTool) },
+    { id: 'markdown', name: 'Markdown 处理', emoji: '📝', component: markRaw(MarkdownTool) },
   ];
 
   // Electron 环境下的额外工具

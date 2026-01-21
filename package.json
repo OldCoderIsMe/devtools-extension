@@ -5,22 +5,24 @@
   "private": false,
   "main": "electron/main.js",
   "scripts": {
-    "dev": "node generate-favicon.js && vite",
-    "build": "vite build && node copy-manifest.js",
+    "dev": "node scripts/generate-favicon.js && vite",
+    "build": "vite build && node scripts/copy-manifest.js",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",
-    "package": "npm run build && node package-extension.js",
-    "electron:dev": "concurrently \"npm run dev\" \"node wait-for-vite.js\"",
+    "package": "npm run build && node scripts/package-extension.js",
+    "electron:dev": "concurrently \"npm run dev\" \"node scripts/wait-for-vite.js\"",
     "electron:build": "ELECTRON=1 npm run build && electron-builder",
-    "electron:build:mac": "ELECTRON=1 npm run build && node clean-dmg-mounts.js && sleep 2 && electron-builder --mac",
+    "electron:build:mac": "ELECTRON=1 npm run build && node scripts/clean-dmg-mounts.js && sleep 2 && electron-builder --mac",
     "electron:pack": "npm run build && electron-builder --dir"
   },
   "dependencies": {
     "crypto-js": "^4.2.0",
+    "marked": "^17.0.1",
     "qrcode": "^1.5.3",
     "vue": "^3.5.0"
   },
   "devDependencies": {
+    "@types/marked": "^5.0.2",
     "@vitejs/plugin-vue": "^5.1.0",
     "concurrently": "^8.2.2",
     "electron": "^31.0.0",
