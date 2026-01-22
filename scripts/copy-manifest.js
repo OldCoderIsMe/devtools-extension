@@ -1,9 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const sourceFile = path.join(__dirname, 'manifest.json');
-const sourceIconsDir = path.join(__dirname, 'icons');
-const destDir = path.join(__dirname, 'dist');
+// 项目根目录（scripts 目录的上一级）
+const rootDir = path.join(__dirname, '..');
+const sourceFile = path.join(rootDir, 'manifest.json');
+const sourceIconsDir = path.join(rootDir, 'icons');
+const destDir = path.join(rootDir, 'dist');
 const destFile = path.join(destDir, 'manifest.json');
 const destIconsDir = path.join(destDir, 'icons');
 
@@ -18,6 +20,10 @@ if (fs.existsSync(sourceFile)) {
   manifestContent = JSON.parse(fs.readFileSync(sourceFile, 'utf8'));
 } else {
   console.error('✗ manifest.json not found!');
+  console.error(`   Expected location: ${sourceFile}`);
+  console.error(`   Current working directory: ${process.cwd()}`);
+  console.error(`   Script directory: ${__dirname}`);
+  console.error(`   Root directory: ${rootDir}`);
   process.exit(1);
 }
 
