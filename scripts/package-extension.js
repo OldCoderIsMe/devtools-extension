@@ -2,11 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const distDir = path.join(__dirname, 'dist');
+// 项目根目录（scripts 目录的上一级）
+const rootDir = path.join(__dirname, '..');
+const distDir = path.join(rootDir, 'dist');
 const packageName = 'devtools-suite';
-const version = require('./package.json').version;
+const version = require(path.join(rootDir, 'package.json')).version;
 const zipFileName = `${packageName}-v${version}.zip`;
-const zipPath = path.join(__dirname, zipFileName);
+const zipPath = path.join(rootDir, zipFileName);
 
 // 检查 dist 目录是否存在
 if (!fs.existsSync(distDir)) {

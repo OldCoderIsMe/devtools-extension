@@ -1,8 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const brandIconPath = path.join(__dirname, 'icons', 'brand-icon.png');
-const publicDir = path.join(__dirname, 'public');
+// 项目根目录（scripts 目录的上一级）
+const rootDir = path.join(__dirname, '..');
+
+const brandIconPath = path.join(rootDir, 'icons', 'brand-icon.png');
+const publicDir = path.join(rootDir, 'public');
 const faviconDest = path.join(publicDir, 'favicon.png');
 const iconsDestDir = path.join(publicDir, 'icons');
 

@@ -7,9 +7,13 @@
 
 const { execSync } = require('child_process');
 const fs = require('fs');
+const path = require('path');
+
+// 项目根目录（scripts 目录的上一级）
+const rootDir = path.join(__dirname, '..');
 
 const productName = 'DevTools Suite';
-const version = require('./package.json').version;
+const version = require(path.join(rootDir, 'package.json')).version;
 const volumeName = `${productName} ${version}`;
 
 console.log(`[清理] 开始清理 DMG 挂载点...`);
