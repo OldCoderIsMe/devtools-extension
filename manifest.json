@@ -3,7 +3,6 @@
     "name": "DevTools Suite",
     "description": "常用开发小工具集合：URL、MD5、时间戳等（本地计算，不上传数据）",
     "version": "0.1.1",
-    "author": "OldCoderIsMe",
     "homepage_url": "https://github.com/OldCoderIsMe/devtools-extension",
     "action": {
       "default_popup": "index.html",
