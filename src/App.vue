@@ -61,14 +61,6 @@
                   <div class="developer-info-label">Developer:</div>
                   <div class="developer-info-value">宛平南路600号热心病友</div>
                 </div>
-                <div class="developer-info-section">
-                  <div class="developer-info-label">Experience:</div>
-                  <div class="developer-info-experience">
-                    <span class="experience-item">Suning</span>
-                    <span class="experience-separator">·</span>
-                    <span class="experience-item">Meituan</span>
-                  </div>
-                </div>
               </div>
               <button class="btn" @click="showDeveloperInfo = false" style="margin-top: 20px;">关闭</button>
             </div>

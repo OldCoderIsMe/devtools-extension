@@ -828,27 +828,6 @@ img {
   font-weight: 500;
 }
 
-.developer-info-experience {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.experience-item {
-  font-size: 14px;
-  color: var(--text-secondary);
-  padding: 4px 12px;
-  background: var(--bg-btn-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-}
-
-.experience-separator {
-  color: var(--text-tertiary);
-  opacity: 0.5;
-}
-
 /* JSON 放大显示模态框 */
 .json-expanded-modal {
   position: fixed;
