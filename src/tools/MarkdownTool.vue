@@ -69,15 +69,53 @@
         💾 下载
       </button>
     </div>
+
+    <!-- 文件名输入对话框 -->
+    <div v-if="showFileNameDialog" class="modal-overlay" @click.self="showFileNameDialog = false">
+      <div class="modal-content">
+        <h3 class="modal-title">输入文件名</h3>
+        <label class="field-label">文件名（不含扩展名）</label>
+        <input
+          ref="fileNameInputRef"
+          v-model="fileNameInput"
+          class="input"
+          type="text"
+          placeholder="输入文件名"
+          @keyup.enter="confirmDownload"
+          @keyup.esc="showFileNameDialog = false"
+          autofocus
+        />
+        <div class="modal-actions">
+          <button class="btn secondary" @click="showFileNameDialog = false">取消</button>
+          <button class="btn" @click="confirmDownload" :disabled="!fileNameInput.trim()">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 确认清空对话框 -->
+    <div v-if="showClearConfirmDialog" class="modal-overlay" @click.self="showClearConfirmDialog = false">
+      <div class="modal-content">
+        <h3 class="modal-title">确认清空</h3>
+        <p class="modal-message">确定要清空所有内容吗？</p>
+        <div class="modal-actions">
+          <button class="btn secondary" @click="showClearConfirmDialog = false">取消</button>
+          <button class="btn" @click="doClearContent">确定</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { marked } from 'marked';
 
 const markdownContent = ref('');
 const viewMode = ref<'edit' | 'split' | 'preview'>('split');
+const showFileNameDialog = ref(false);
+const fileNameInput = ref('');
+const fileNameInputRef = ref<HTMLInputElement | null>(null);
+const showClearConfirmDialog = ref(false);
 
 // 生成默认文件名
 const generateDefaultFileName = () => {
@@ -110,9 +148,13 @@ const updatePreview = () => {
 
 // 清空内容
 const clearContent = () => {
-  if (confirm('确定要清空所有内容吗？')) {
-    markdownContent.value = '';
-  }
+  showClearConfirmDialog.value = true;
+};
+
+// 执行清空内容
+const doClearContent = () => {
+  markdownContent.value = '';
+  showClearConfirmDialog.value = false;
 };
 
 // 复制 Markdown 内容
@@ -151,18 +193,27 @@ const downloadMarkdown = () => {
     return;
   }
 
+  // 显示文件名输入对话框
+  const defaultFileName = generateDefaultFileName();
+  fileNameInput.value = defaultFileName;
+  showFileNameDialog.value = true;
+  
+  // 聚焦输入框
+  nextTick(() => {
+    fileNameInputRef.value?.focus();
+    fileNameInputRef.value?.select();
+  });
+};
+
+// 确认下载
+const confirmDownload = () => {
+  if (!fileNameInput.value.trim()) {
+    return;
+  }
+  
   try {
-    // 弹出输入框让用户输入文件名
-    const defaultFileName = generateDefaultFileName();
-    const inputFileName = prompt('请输入文件名（不含扩展名）：', defaultFileName);
-    
-    // 如果用户取消，则不下载
-    if (inputFileName === null) {
-      return;
-    }
-    
     // 获取文件名，如果为空则使用默认文件名
-    let fileName = inputFileName.trim();
+    let fileName = fileNameInput.value.trim();
     
     // 移除文件名中可能存在的 .md 扩展名
     fileName = fileName.replace(/\.md$/i, '');
@@ -172,7 +223,7 @@ const downloadMarkdown = () => {
     
     // 如果文件名仍然为空，使用默认文件名
     if (!fileName) {
-      fileName = defaultFileName;
+      fileName = generateDefaultFileName();
     }
     
     // 创建 Blob 对象
@@ -191,6 +242,9 @@ const downloadMarkdown = () => {
     // 清理
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    
+    // 关闭对话框
+    showFileNameDialog.value = false;
   } catch (error: any) {
     alert(`下载失败: ${error?.message || error}`);
   }
@@ -500,4 +554,56 @@ const downloadMarkdown = () => {
 }
 
 /* 视图模式切换 - 使用 v-show 控制，这里保留作为备用 */
+
+/* 模态框样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.modal-message {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
 </style>
