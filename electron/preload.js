@@ -8,6 +8,11 @@ contextBridge.exposeInMainWorld('electron', {
     chrome: process.versions.chrome,
     electron: process.versions.electron,
   },
+  // 媒体权限（仅 Electron / macOS）
+  media: {
+    getCameraStatus: () => ipcRenderer.invoke('media:getCameraStatus'),
+    askForCameraAccess: () => ipcRenderer.invoke('media:askForCameraAccess'),
+  },
   // 快速搜索相关 IPC
   quickSearch: {
     close: () => ipcRenderer.invoke('quick-search:close'),

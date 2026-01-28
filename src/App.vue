@@ -81,7 +81,7 @@
   </template>
   
   <script setup lang="ts">
-  import { computed, ref, onMounted, onUnmounted, markRaw } from 'vue';
+  import { computed, ref, onMounted, onUnmounted, markRaw, defineAsyncComponent } from 'vue';
   import UrlTool from './tools/UrlTool.vue';
   import Md5Tool from './tools/Md5Tool.vue';
   import TimestampTool from './tools/TimestampTool.vue';
@@ -108,6 +108,14 @@ import SettingsPanel from './components/SettingsPanel.vue';
   // 检测是否在 Electron 环境中
   const isElectron = typeof window !== 'undefined' && 
     (window as any).electron !== undefined;
+
+  // 检测是否在 Chrome 扩展的 DevTools 面板环境中
+  const isExtensionDevTools = typeof chrome !== 'undefined' && 
+    (chrome as any).devtools !== undefined;
+  
+  // 检测是否在 Chrome 插件 popup 环境中
+  const isChromeExtension = typeof chrome !== 'undefined' && 
+    chrome.runtime && chrome.runtime.id && !isExtensionDevTools;
   
   // 基础工具列表
   const baseTools: ToolMeta[] = [
@@ -123,6 +131,15 @@ import SettingsPanel from './components/SettingsPanel.vue';
     { id: 'diff', name: '文本差异对比', emoji: '🔄', component: markRaw(DiffTool) },
     { id: 'yearcountdown', name: '年度倒计时', emoji: '📅', component: markRaw(YearCountdownTool) },
     { id: 'markdown', name: 'Markdown 处理', emoji: '📝', component: markRaw(MarkdownTool) },
+    // 浏览器 Web 版支持（扩展环境默认不开放：权限/CSP/用户预期复杂）
+    ...(!isChromeExtension
+      ? ([{
+          id: 'solarsystem',
+          name: 'Solar System',
+          emoji: '🪐',
+          component: markRaw(defineAsyncComponent(() => import('./tools/SolarSystemTool.vue'))),
+        }] as ToolMeta[])
+      : []),
   ];
 
   // Electron 环境下的额外工具
@@ -152,14 +169,6 @@ import SettingsPanel from './components/SettingsPanel.vue';
     showDeveloperInfo.value = false;
     showSettings.value = false;
   }
-  
-  // 检测是否在 Chrome 扩展的 DevTools 面板环境中
-  const isExtensionDevTools = typeof chrome !== 'undefined' && 
-    (chrome as any).devtools !== undefined;
-  
-  // 检测是否在 Chrome 插件 popup 环境中
-  const isChromeExtension = typeof chrome !== 'undefined' && 
-    chrome.runtime && chrome.runtime.id && !isExtensionDevTools;
   
   function toggleFullscreen() {
     if (!appRef.value) return;
@@ -362,7 +371,7 @@ import SettingsPanel from './components/SettingsPanel.vue';
   });
   
   const activeToolComponent = computed(() => {
-    const found = tools.value.find((t) => t.id === activeToolId.value);
+    const found = tools.value.find((t: ToolMeta) => t.id === activeToolId.value);
     return found?.component ?? tools.value[0].component;
   });
   

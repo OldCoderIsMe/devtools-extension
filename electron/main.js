@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain, Tray, nativeImage, dialog, crashReporter } = require('electron');
+const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain, Tray, nativeImage, dialog, crashReporter, session, systemPreferences } = require('electron');
 const path = require('path');
 const settings = require('./settings');
 const fileOperations = require('./fileOperations');
@@ -438,6 +438,29 @@ function registerIpcHandlers() {
     } else {
       console.log('[Electron] 年度倒计时窗口已经隐藏');
       return { success: true, message: '窗口已经隐藏' };
+    }
+  });
+
+  // 摄像头权限（macOS）
+  ipcMain.handle('media:getCameraStatus', () => {
+    try {
+      if (process.platform !== 'darwin') return 'not_supported';
+      return systemPreferences.getMediaAccessStatus('camera');
+    } catch (e) {
+      return 'unknown';
+    }
+  });
+
+  ipcMain.handle('media:askForCameraAccess', async () => {
+    try {
+      if (process.platform !== 'darwin') return false;
+      const status = systemPreferences.getMediaAccessStatus('camera');
+      if (status === 'granted') return true;
+      // 会触发系统弹窗（若已拒绝通常会直接返回 false）
+      const ok = await systemPreferences.askForMediaAccess('camera');
+      return !!ok;
+    } catch (e) {
+      return false;
     }
   });
 
@@ -889,6 +912,26 @@ app.whenReady().then(() => {
     if (app.setAsDefaultProtocolClient) {
       app.setAsDefaultProtocolClient('devtools-suite');
     }
+  }
+
+  // 摄像头/麦克风权限（用于 getUserMedia）
+  // Electron 默认会自动放行权限请求，显式处理更可控
+  try {
+    session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
+      if (permission !== 'media') return callback(false);
+
+      const requestingUrl = details?.requestingUrl || webContents.getURL() || '';
+      const allow =
+        requestingUrl.startsWith('file://') ||
+        requestingUrl.startsWith('http://localhost:') ||
+        requestingUrl.startsWith('http://127.0.0.1:') ||
+        requestingUrl.startsWith('https://localhost:') ||
+        requestingUrl.startsWith('https://127.0.0.1:');
+
+      callback(allow);
+    });
+  } catch (e) {
+    console.warn('[Electron] 设置媒体权限处理失败:', e?.message || e);
   }
   
   createWindow();

@@ -52,4 +52,8 @@ declare const chrome: {
       set: (items: Record<string, any>) => void;
     };
   };
+  runtime?: {
+    id?: string;
+  };
+  devtools?: any;
 } | undefined;

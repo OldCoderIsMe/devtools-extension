@@ -34,7 +34,7 @@
 
 ```bash
 # 对于 DMG 文件
-xattr -cr "/path/to/DevTools Suite-0.1.2.dmg"
+xattr -cr "/path/to/DevTools Suite-0.1.4.dmg"
 
 # 对于已安装的应用
 xattr -cr "/Applications/DevTools Suite.app"
@@ -57,6 +57,7 @@ sudo spctl --master-enable
 1. 打开应用后，如果提示需要权限：
    - 点击"打开系统偏好设置"
    - 在"隐私与安全性"中授予相应权限
+   - 如果使用 **Solar System**，请允许 **摄像头** 权限
 
 2. 应用启动后，可以使用以下快捷键：
    - `Cmd+K` 或 `Cmd+Space` - 打开快速搜索

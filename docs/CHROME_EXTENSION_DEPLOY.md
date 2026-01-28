@@ -27,7 +27,7 @@ npm run package
 这会自动：
 1. ✅ 构建项目（`npm run build`）
 2. ✅ 生成图标（从 brand-icon.png 生成 16x16, 48x48, 128x128）
-3. ✅ 创建 ZIP 包（`devtools-suite-v0.1.0.zip`）
+3. ✅ 创建 ZIP 包（例如：`devtools-suite-v0.1.4.zip`，以 `package.json` 的 version 为准）
 
 ### 快速发布步骤
 
@@ -89,7 +89,7 @@ npm run package
 这会自动完成：
 1. 构建项目
 2. 生成图标
-3. 创建 ZIP 包（`devtools-suite-v0.1.0.zip`）
+3. 创建 ZIP 包（例如：`devtools-suite-v0.1.4.zip`，以 `package.json` 的 version 为准）
 
 ### 方法二：手动打包
 
@@ -101,7 +101,7 @@ npm run build
 cd dist
 
 # 3. 创建 ZIP（Mac/Linux）
-zip -r ../devtools-suite-v0.1.0.zip . -x "*/README.md" -x "*/.gitkeep" -x "*/.DS_Store"
+zip -r ../devtools-suite-v0.1.4.zip . -x "*/README.md" -x "*/.gitkeep" -x "*/.DS_Store"
 
 # Windows 用户可以使用图形界面压缩 dist 文件夹内的所有文件
 ```
@@ -134,7 +134,7 @@ zip -r ../devtools-suite-v0.1.0.zip . -x "*/README.md" -x "*/.gitkeep" -x "*/.DS
 ### 步骤 2：上传 ZIP 文件
 
 1. 点击"**选择文件**"或拖拽文件
-2. 选择：`devtools-suite-v0.1.0.zip`
+2. 选择：`devtools-suite-v0.1.4.zip`（以实际打包生成的文件名为准）
 3. 等待上传完成（可能需要几分钟）
 
 ### 步骤 3：验证上传
