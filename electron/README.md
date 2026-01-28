@@ -37,8 +37,14 @@ npm run electron:build:mac
 ```
 
 这将生成：
-- `release/DevTools Suite-0.1.0.dmg` - macOS 安装包
-- `release/DevTools Suite-0.1.0-mac.zip` - macOS 压缩包
+- `release/DevTools Suite-0.1.4.dmg` - macOS 安装包（x64）
+- `release/DevTools Suite-0.1.4-arm64.dmg` - macOS 安装包（arm64）
+- `release/DevTools Suite-0.1.4-mac.zip` - macOS 压缩包（x64）
+- `release/DevTools Suite-0.1.4-arm64-mac.zip` - macOS 压缩包（arm64）
+
+说明：
+- 脚本会按架构顺序构建（避免 DMG 并发挂载冲突）
+- 默认禁用自动发布（`--publish never`）
 
 ### 仅打包（不生成安装包）
 
@@ -124,6 +130,7 @@ electron/
 - ✅ 窗口管理（最小化、最大化、关闭）
 - ✅ 安全隔离（contextIsolation）
 - ✅ 自动更新支持（可配置）
+- ✅ 摄像头交互（Solar System）：在 Electron 客户端中可通过 `getUserMedia` 调用摄像头并进行手势交互（需要系统授权）
 
 ## 故障排除
 
