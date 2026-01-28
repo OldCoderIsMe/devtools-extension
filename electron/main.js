@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain, Tray, nativeImage, dialog, crashReporter } = require('electron');
+const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain, Tray, nativeImage, dialog, crashReporter, session } = require('electron');
 const path = require('path');
 const settings = require('./settings');
 const fileOperations = require('./fileOperations');
@@ -889,6 +889,26 @@ app.whenReady().then(() => {
     if (app.setAsDefaultProtocolClient) {
       app.setAsDefaultProtocolClient('devtools-suite');
     }
+  }
+
+  // 摄像头/麦克风权限（用于 getUserMedia）
+  // Electron 默认会自动放行权限请求，显式处理更可控
+  try {
+    session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
+      if (permission !== 'media') return callback(false);
+
+      const requestingUrl = details?.requestingUrl || webContents.getURL() || '';
+      const allow =
+        requestingUrl.startsWith('file://') ||
+        requestingUrl.startsWith('http://localhost:') ||
+        requestingUrl.startsWith('http://127.0.0.1:') ||
+        requestingUrl.startsWith('https://localhost:') ||
+        requestingUrl.startsWith('https://127.0.0.1:');
+
+      callback(allow);
+    });
+  } catch (e) {
+    console.warn('[Electron] 设置媒体权限处理失败:', e?.message || e);
   }
   
   createWindow();

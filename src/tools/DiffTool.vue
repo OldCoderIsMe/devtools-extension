@@ -34,7 +34,7 @@
       <button class="btn secondary" @click="handleClear">清空</button>
     </div>
 
-    <div v-if="diffResult.length > 0" style="margin-top: 12px;">
+    <div v-if="diffMode === 'line' ? diffLines.length > 0 : diffChars.length > 0" style="margin-top: 12px;">
       <label class="field-label">对比结果</label>
       <div
         class="diff-result-container"
@@ -51,53 +51,57 @@
           line-height: 1.6;
         "
       >
-        <div v-for="(item, index) in diffResult" :key="index">
-          <span
-            v-if="diffMode === 'line'"
-            :style="{
-              display: 'block',
-              padding: '6px 10px',
-              marginBottom: '4px',
-              borderRadius: '8px',
-              backgroundColor:
-                item.type === 'added'
-                  ? 'var(--diff-added-bg)'
-                  : item.type === 'removed'
-                  ? 'var(--diff-removed-bg)'
-                  : 'transparent',
-              color:
-                item.type === 'added'
-                  ? 'var(--diff-added-text)'
-                  : item.type === 'removed'
-                  ? 'var(--diff-removed-text)'
-                  : 'var(--text-secondary)',
-            }"
-          >
-            <span :style="{ color: 'var(--text-quaternary)', marginRight: '8px', fontWeight: '600' }">
-              {{ item.type === 'added' ? '+' : item.type === 'removed' ? '-' : ' ' }}
+        <template v-if="diffMode === 'line'">
+          <div v-for="(item, index) in diffLines" :key="index">
+            <span
+              :style="{
+                display: 'block',
+                padding: '6px 10px',
+                marginBottom: '4px',
+                borderRadius: '8px',
+                backgroundColor:
+                  item.type === 'added'
+                    ? 'var(--diff-added-bg)'
+                    : item.type === 'removed'
+                    ? 'var(--diff-removed-bg)'
+                    : 'transparent',
+                color:
+                  item.type === 'added'
+                    ? 'var(--diff-added-text)'
+                    : item.type === 'removed'
+                    ? 'var(--diff-removed-text)'
+                    : 'var(--text-secondary)',
+              }"
+            >
+              <span :style="{ color: 'var(--text-quaternary)', marginRight: '8px', fontWeight: '600' }">
+                {{ item.type === 'added' ? '+' : item.type === 'removed' ? '-' : ' ' }}
+              </span>
+              {{ item.content }}
             </span>
-            {{ item.content }}
-          </span>
-          <span
-            v-else
-            :style="{
-              backgroundColor:
-                item.type === 'added'
-                  ? 'var(--diff-added-bg)'
-                  : item.type === 'removed'
-                  ? 'var(--diff-removed-bg)'
-                  : 'transparent',
-              color:
-                item.type === 'added'
-                  ? 'var(--diff-added-text)'
-                  : item.type === 'removed'
-                  ? 'var(--diff-removed-text)'
-                  : 'var(--text-secondary)',
-            }"
-          >
-            {{ item.char === ' ' ? '·' : item.char === '\n' ? '↵\n' : item.char }}
-          </span>
-        </div>
+          </div>
+        </template>
+        <template v-else>
+          <div v-for="(item, index) in diffChars" :key="index">
+            <span
+              :style="{
+                backgroundColor:
+                  item.type === 'added'
+                    ? 'var(--diff-added-bg)'
+                    : item.type === 'removed'
+                    ? 'var(--diff-removed-bg)'
+                    : 'transparent',
+                color:
+                  item.type === 'added'
+                    ? 'var(--diff-added-text)'
+                    : item.type === 'removed'
+                    ? 'var(--diff-removed-text)'
+                    : 'var(--text-secondary)',
+              }"
+            >
+              {{ item.char === ' ' ? '·' : item.char === '\n' ? '↵\n' : item.char }}
+            </span>
+          </div>
+        </template>
       </div>
       <div style="margin-top: 12px; font-size: 12px; color: var(--text-tertiary);">
         <div>统计：</div>
@@ -114,27 +118,33 @@ import { computeDiff, computeCharDiff, type DiffLine } from '@/core/diff';
 const diffMode = ref<'line' | 'char'>('line');
 const text1 = ref('');
 const text2 = ref('');
-const diffResult = ref<DiffLine[] | Array<{ char: string; type: 'added' | 'removed' | 'unchanged' }>>([]);
+type CharDiff = { char: string; type: 'added' | 'removed' | 'unchanged' };
+const diffLines = ref<DiffLine[]>([]);
+const diffChars = ref<CharDiff[]>([]);
 
 const stats = computed(() => {
-  const added = diffResult.value.filter((item) => item.type === 'added').length;
-  const removed = diffResult.value.filter((item) => item.type === 'removed').length;
-  const unchanged = diffResult.value.filter((item) => item.type === 'unchanged').length;
+  const items = diffMode.value === 'line' ? diffLines.value : diffChars.value;
+  const added = items.filter((item) => item.type === 'added').length;
+  const removed = items.filter((item) => item.type === 'removed').length;
+  const unchanged = items.filter((item) => item.type === 'unchanged').length;
   return { added, removed, unchanged };
 });
 
 function handleCompare() {
   if (diffMode.value === 'line') {
-    diffResult.value = computeDiff(text1.value, text2.value);
+    diffLines.value = computeDiff(text1.value, text2.value);
+    diffChars.value = [];
   } else {
-    diffResult.value = computeCharDiff(text1.value, text2.value);
+    diffChars.value = computeCharDiff(text1.value, text2.value);
+    diffLines.value = [];
   }
 }
 
 function handleClear() {
   text1.value = '';
   text2.value = '';
-  diffResult.value = [];
+  diffLines.value = [];
+  diffChars.value = [];
 }
 </script>
 
