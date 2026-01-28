@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain, Tray, nativeImage, dialog, crashReporter, session } = require('electron');
+const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain, Tray, nativeImage, dialog, crashReporter, session, systemPreferences } = require('electron');
 const path = require('path');
 const settings = require('./settings');
 const fileOperations = require('./fileOperations');
@@ -438,6 +438,29 @@ function registerIpcHandlers() {
     } else {
       console.log('[Electron] 年度倒计时窗口已经隐藏');
       return { success: true, message: '窗口已经隐藏' };
+    }
+  });
+
+  // 摄像头权限（macOS）
+  ipcMain.handle('media:getCameraStatus', () => {
+    try {
+      if (process.platform !== 'darwin') return 'not_supported';
+      return systemPreferences.getMediaAccessStatus('camera');
+    } catch (e) {
+      return 'unknown';
+    }
+  });
+
+  ipcMain.handle('media:askForCameraAccess', async () => {
+    try {
+      if (process.platform !== 'darwin') return false;
+      const status = systemPreferences.getMediaAccessStatus('camera');
+      if (status === 'granted') return true;
+      // 会触发系统弹窗（若已拒绝通常会直接返回 false）
+      const ok = await systemPreferences.askForMediaAccess('camera');
+      return !!ok;
+    } catch (e) {
+      return false;
     }
   });
 

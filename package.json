@@ -66,7 +66,9 @@
         "CFBundleName": "DevTools Suite",
         "CFBundleDisplayName": "DevTools Suite",
         "CFBundleExecutable": "DevTools Suite",
-        "LSApplicationCategoryType": "public.app-category.developer-tools"
+        "LSApplicationCategoryType": "public.app-category.developer-tools",
+        "NSCameraUsageDescription": "用于 Solar System 功能：读取摄像头画面进行手势识别（仅本地处理，不上传数据）。",
+        "NSMicrophoneUsageDescription": "用于媒体权限兼容（默认不采集麦克风，仅在需要时由用户授权）。"
       }
     },
     "dmg": {

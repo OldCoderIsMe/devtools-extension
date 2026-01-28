@@ -86,6 +86,8 @@ let yaw = 0;
 let pitch = 0;
 let radius = 18;
 
+const isElectronEnv = typeof window !== 'undefined' && (window as any).electron !== undefined;
+
 function isLocalhostHost(hostname: string) {
   return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
 }
@@ -368,9 +370,21 @@ async function start() {
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error('当前环境不支持摄像头（缺少 navigator.mediaDevices.getUserMedia）');
     }
-    // 浏览器要求安全上下文（HTTPS 或 localhost）
-    if (!window.isSecureContext && !isLocalhostHost(window.location.hostname)) {
+    // 浏览器要求安全上下文（HTTPS 或 localhost）；Electron(file://) 不受此限制
+    if (!isElectronEnv && !window.isSecureContext && !isLocalhostHost(window.location.hostname)) {
       throw new Error('浏览器需要 HTTPS（或 localhost）才能访问摄像头，请使用 https 访问该页面');
+    }
+
+    // Electron/macOS：先主动触发系统摄像头授权，避免 getUserMedia 卡住无反馈
+    if (isElectronEnv && (window as any).electron?.media?.getCameraStatus) {
+      const status = await (window as any).electron.media.getCameraStatus();
+      if (status !== 'granted') {
+        statusText.value = '请求系统摄像头权限...';
+        const ok = await (window as any).electron.media.askForCameraAccess();
+        if (!ok) {
+          throw new Error('未获得摄像头权限。请到“系统设置 → 隐私与安全性 → 摄像头”中允许 DevTools Suite。');
+        }
+      }
     }
 
     let video = videoRef.value;
