@@ -43,6 +43,14 @@
               </div>
               <div
                 v-if="isChromeExtension"
+                class="quick-search-toggle"
+                @click="openQuickSearch"
+                :title="quickSearchShortcutLabel"
+              >
+                <span>🔍</span>
+              </div>
+              <div
+                v-if="isChromeExtension"
                 class="clipboard-toggle"
                 :class="{ active: clipboardConsent === 'enabled' }"
                 @click="toggleClipboardDetection"
@@ -144,6 +152,25 @@ import {
   // 检测是否在 Chrome 插件 popup 环境中
   const isChromeExtension = typeof chrome !== 'undefined' && 
     chrome.runtime && chrome.runtime.id && !isExtensionDevTools;
+
+  // 快速搜索：扩展里由 background 打开独立弹窗，快捷键与 macOS 客户端保持一致
+  const isMacPlatform = /Mac|iPhone|iPad|iPod/.test(
+    navigator.platform || navigator.userAgent,
+  );
+  const quickSearchShortcutLabel = computed(() =>
+    isMacPlatform ? '快速搜索（⌘ + Shift + K）' : '快速搜索（Ctrl + Shift + K）',
+  );
+
+  function openQuickSearch() {
+    try {
+      (chrome as any)?.runtime?.sendMessage?.(
+        { type: 'open-quick-search' },
+        () => void (chrome as any)?.runtime?.lastError,
+      );
+    } catch {
+      // 扩展 API 不可用时静默降级
+    }
+  }
   
   // 基础工具列表
   const baseTools: ToolMeta[] = [

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "DevTools Suite",
   "description": "常用开发小工具集合：URL、MD5、时间戳等（本地计算，不上传数据）",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "homepage_url": "https://github.com/OldCoderIsMe/devtools-extension",
   "action": {
     "default_popup": "index.html",
@@ -12,5 +12,14 @@
     "service_worker": "assets/background.js",
     "type": "module"
   },
-  "permissions": ["storage", "contextMenus", "clipboardRead"]
+  "permissions": ["storage", "contextMenus", "clipboardRead"],
+  "commands": {
+    "open-quick-search": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "Command+Shift+K"
+      },
+      "description": "打开快速搜索弹窗"
+    }
+  }
 }
