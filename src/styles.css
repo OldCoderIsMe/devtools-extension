@@ -469,7 +469,8 @@ body:not(.electron-env):not(.chrome-extension-env) .app {
 .theme-toggle,
 .fullscreen-toggle,
 .settings-toggle,
-.developer-toggle {
+.developer-toggle,
+.clipboard-toggle {
   padding: 6px;
   border-radius: 8px;
   cursor: pointer;
@@ -494,7 +495,8 @@ body:not(.electron-env):not(.chrome-extension-env) .app {
 .theme-toggle:hover,
 .fullscreen-toggle:hover,
 .settings-toggle:hover,
-.developer-toggle:hover {
+.developer-toggle:hover,
+.clipboard-toggle:hover {
   background: var(--bg-btn-secondary-hover);
   color: var(--text-secondary);
   transform: scale(1.05);
@@ -503,9 +505,16 @@ body:not(.electron-env):not(.chrome-extension-env) .app {
 .theme-toggle span,
 .fullscreen-toggle span,
 .settings-toggle span,
-.developer-toggle span {
+.developer-toggle span,
+.clipboard-toggle span {
   display: block;
   line-height: 1;
+}
+
+.clipboard-toggle.active {
+  background: var(--bg-tool-item-active);
+  border-color: rgba(59, 130, 246, 0.45);
+  color: var(--text-primary);
 }
 
 .tool-list {

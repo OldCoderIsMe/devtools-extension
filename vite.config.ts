@@ -19,6 +19,8 @@ export default defineConfig({
         popup: resolve(__dirname, 'index.html'),
         'quick-search': resolve(__dirname, 'quick-search.html'),
         'year-countdown-widget': resolve(__dirname, 'year-countdown-widget.html'),
+        // 扩展的 background service worker（右键菜单入口）
+        background: resolve(__dirname, 'src/background.ts'),
       },
       output: {
         entryFileNames: `assets/[name].js`,

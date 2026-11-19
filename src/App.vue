@@ -2,6 +2,15 @@
     <div :class="['app', { 'light-theme': isLightTheme, 'fullscreen': isFullscreen, 'electron': isElectron, 'chrome-extension': isChromeExtension }]" ref="appRef">
       <!-- Electron 环境：顶部可拖动区域 -->
       <div v-if="isElectron" class="electron-titlebar"></div>
+
+      <!-- 剪贴板智能识别建议条（仅 Chrome 扩展） -->
+      <ClipboardSuggestion
+        v-if="showClipboardBar"
+        :detection="clipboardDetection"
+        @go="handleClipboardGo"
+        @enable="enableClipboardDetection"
+        @dismiss="dismissClipboardBar"
+      />
       
       <div class="app-content">
         <aside class="sidebar">
@@ -31,6 +40,15 @@
               </div>
               <div class="developer-toggle" @click="showDeveloperInfo = true" title="开发者信息">
                 <span>👤</span>
+              </div>
+              <div
+                v-if="isChromeExtension"
+                class="clipboard-toggle"
+                :class="{ active: clipboardConsent === 'enabled' }"
+                @click="toggleClipboardDetection"
+                :title="clipboardConsent === 'enabled' ? '关闭剪贴板智能识别' : '开启剪贴板智能识别'"
+              >
+                <span>📋</span>
               </div>
               <div v-if="isElectron" class="settings-toggle" @click="showSettings = true" title="设置">
                 <span>⚙️</span>
@@ -81,7 +99,7 @@
   </template>
   
   <script setup lang="ts">
-  import { computed, ref, onMounted, onUnmounted, markRaw, defineAsyncComponent } from 'vue';
+  import { computed, ref, onMounted, onUnmounted, markRaw, nextTick, defineAsyncComponent } from 'vue';
   import UrlTool from './tools/UrlTool.vue';
   import Md5Tool from './tools/Md5Tool.vue';
   import TimestampTool from './tools/TimestampTool.vue';
@@ -96,8 +114,18 @@
   import SignatureTool from './tools/SignatureTool.vue';
   import YearCountdownTool from './tools/YearCountdownTool.vue';
   import MarkdownTool from './tools/MarkdownTool.vue';
+  import ColorTool from './tools/ColorTool.vue';
+  import JwtTool from './tools/JwtTool.vue';
 import SettingsPanel from './components/SettingsPanel.vue';
-  
+import ClipboardSuggestion from './components/ClipboardSuggestion.vue';
+import { detectClipboard, type ClipboardDetection } from './core/clipboard';
+import {
+  CLIPBOARD_SETTING_KEY,
+  consumePendingPrefill,
+  emitPrefill,
+  isPrefillFresh,
+  type PrefillPayload,
+} from './core/prefill';
   interface ToolMeta {
     id: string;
     name: string;
@@ -131,6 +159,8 @@ import SettingsPanel from './components/SettingsPanel.vue';
     { id: 'diff', name: '文本差异对比', emoji: '🔄', component: markRaw(DiffTool) },
     { id: 'yearcountdown', name: '年度倒计时', emoji: '📅', component: markRaw(YearCountdownTool) },
     { id: 'markdown', name: 'Markdown 处理', emoji: '📝', component: markRaw(MarkdownTool) },
+    { id: 'color', name: '颜色工具', emoji: '🎨', component: markRaw(ColorTool) },
+    { id: 'jwt', name: 'JWT 解析', emoji: '🔑', component: markRaw(JwtTool) },
     // 浏览器 Web 版支持（扩展环境默认不开放：权限/CSP/用户预期复杂）
     ...(!isChromeExtension
       ? ([{
@@ -161,6 +191,161 @@ import SettingsPanel from './components/SettingsPanel.vue';
   
   // 设置面板显示状态
   const showSettings = ref(false);
+
+  // 剪贴板智能识别：unknown 表示还没有做出选择
+  const clipboardConsent = ref<'unknown' | 'enabled' | 'disabled'>('unknown');
+  const clipboardDetection = ref<ClipboardDetection | null>(null);
+  const clipboardBarDismissed = ref(false);
+
+  const showClipboardBar = computed(
+    () =>
+      isChromeExtension &&
+      !clipboardBarDismissed.value &&
+      (clipboardDetection.value !== null || clipboardConsent.value === 'unknown'),
+  );
+
+  function readLocalSetting(key: string): Promise<unknown> {
+    if (typeof chrome === 'undefined' || !chrome.storage?.local) {
+      return Promise.resolve(undefined);
+    }
+    return new Promise((resolve) => {
+      try {
+        chrome.storage.local.get([key], (result) => resolve(result?.[key]));
+      } catch {
+        resolve(undefined);
+      }
+    });
+  }
+
+  function writeLocalSetting(key: string, value: unknown): Promise<void> {
+    if (typeof chrome === 'undefined' || !chrome.storage?.local) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      try {
+        chrome.storage.local.set({ [key]: value }, () => resolve());
+      } catch {
+        resolve();
+      }
+    });
+  }
+
+  async function detectCurrentClipboard(): Promise<void> {
+    try {
+      if (!navigator.clipboard?.readText) return;
+      const text = await navigator.clipboard.readText();
+      const detected = detectClipboard(text);
+      if (detected) {
+        clipboardDetection.value = detected;
+      }
+    } catch {
+      // 未授权、浏览器不支持或用户拒绝时静默降级，不弹出错误
+    }
+  }
+
+  async function initClipboardDetection(): Promise<void> {
+    if (!isChromeExtension) return;
+    const saved = await readLocalSetting(CLIPBOARD_SETTING_KEY);
+    if (saved === 'enabled') {
+      clipboardConsent.value = 'enabled';
+      await detectCurrentClipboard();
+    } else if (saved === 'disabled') {
+      clipboardConsent.value = 'disabled';
+    } else {
+      clipboardConsent.value = 'unknown';
+    }
+  }
+
+  function enableClipboardDetection(): void {
+    clipboardConsent.value = 'enabled';
+    clipboardBarDismissed.value = false;
+    void writeLocalSetting(CLIPBOARD_SETTING_KEY, 'enabled');
+    void detectCurrentClipboard();
+  }
+
+  function dismissClipboardBar(): void {
+    clipboardBarDismissed.value = true;
+    if (clipboardConsent.value === 'unknown') {
+      clipboardConsent.value = 'disabled';
+      void writeLocalSetting(CLIPBOARD_SETTING_KEY, 'disabled');
+    }
+  }
+
+  /** 侧边栏开关：随时开启 / 关闭剪贴板智能识别 */
+  function toggleClipboardDetection(): void {
+    if (clipboardConsent.value === 'enabled') {
+      clipboardConsent.value = 'disabled';
+      clipboardDetection.value = null;
+      clipboardBarDismissed.value = false;
+      void writeLocalSetting(CLIPBOARD_SETTING_KEY, 'disabled');
+      return;
+    }
+    clipboardBarDismissed.value = false;
+    enableClipboardDetection();
+  }
+
+  function handleClipboardGo(): void {
+    const detection = clipboardDetection.value;
+    if (!detection) return;
+
+    clipboardDetection.value = null;
+    clipboardBarDismissed.value = true;
+    if (tools.value.some((tool) => tool.id === detection.toolId)) {
+      activeToolId.value = detection.toolId;
+      showDeveloperInfo.value = false;
+      showSettings.value = false;
+    }
+    nextTick(() => {
+      emitPrefill({
+        toolId: detection.toolId,
+        value: detection.value,
+        action: detection.action,
+        source: 'clipboard',
+        createdAt: Date.now(),
+      });
+    });
+  }
+
+  /**
+   * 消费右键菜单 / 剪贴板入口留下的一次性预填数据。
+   * 必须在子组件挂载完成后再派发，确保工具已经订阅。
+   */
+  async function applyExternalPrefill(): Promise<void> {
+    if (!isChromeExtension) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const urlTool = params.get('tool');
+
+    let payload: PrefillPayload | null = null;
+    try {
+      payload = await consumePendingPrefill();
+    } catch {
+      payload = null;
+    }
+    if (payload && !isPrefillFresh(payload)) {
+      payload = null;
+    }
+
+    const targetTool = payload?.toolId ?? urlTool;
+    if (targetTool && tools.value.some((tool) => tool.id === targetTool)) {
+      activeToolId.value = targetTool;
+      showDeveloperInfo.value = false;
+      showSettings.value = false;
+      await nextTick();
+      if (payload) {
+        emitPrefill(payload);
+      }
+    }
+
+    if (urlTool) {
+      // 清理查询串，刷新页面时不会重复带入
+      try {
+        window.history.replaceState(null, '', window.location.pathname);
+      } catch {
+        /* 忽略不可用环境 */
+      }
+    }
+  }
   
   // 选择工具
   function selectTool(toolId: string) {
@@ -275,6 +460,10 @@ import SettingsPanel from './components/SettingsPanel.vue';
   
   onMounted(() => {
     loadTheme();
+
+    // 消费右键菜单 / 剪贴板入口带入的数据
+    void initClipboardDetection();
+    void applyExternalPrefill();
     
     // 在 Electron 环境中，给 body 添加 class 以便应用样式
     if (isElectron) {

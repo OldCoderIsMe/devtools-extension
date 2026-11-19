@@ -31,10 +31,24 @@
   <script setup lang="ts">
   import { ref } from 'vue';
   import { urlEncode, urlDecode } from '@/core/url';
+  import { usePrefill } from '@/core/prefill';
   
   const input = ref('');
   const output = ref('');
   const message = ref('');
+
+  usePrefill((payload) => {
+    if (!payload.value) return;
+    input.value = payload.value;
+    if (payload.action === 'encode') {
+      handleEncode();
+    } else {
+      handleDecode();
+    }
+    if (payload.truncated) {
+      message.value = '选中文本过长，已截断为前 200000 个字符';
+    }
+  });
   
   function handleEncode() {
     message.value = '';

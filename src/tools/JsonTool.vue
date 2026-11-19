@@ -84,6 +84,7 @@ import {
   escapeJson,
   unescapeJson,
 } from '@/core/json';
+import { usePrefill } from '@/core/prefill';
 
 type Operation = 'format' | 'compress' | 'validate' | 'escape' | 'unescape';
 
@@ -94,6 +95,18 @@ const message = ref('');
 const validationResult = ref<{ valid: boolean; error?: string } | null>(null);
 const showExpanded = ref(false);
 const modalContentWidth = ref<string>('90%');
+
+usePrefill((payload) => {
+  if (!payload.value) return;
+  if (payload.action === 'format' || payload.action === 'compress' || payload.action === 'validate' || payload.action === 'escape' || payload.action === 'unescape') {
+    operation.value = payload.action as Operation;
+  }
+  input.value = payload.value;
+  handleProcess();
+  if (payload.truncated) {
+    message.value = '选中文本过长，已截断为前 200000 个字符';
+  }
+});
 
 // ESC 键关闭模态框
 function handleEscapeKey(event: KeyboardEvent) {
