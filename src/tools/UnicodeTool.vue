@@ -66,6 +66,7 @@ import {
   batchUnicodeToChinese,
   batchChineseToUnicode,
 } from '@/core/unicode';
+import { usePrefill } from '@/core/prefill';
 
 const direction = ref<'to-chinese' | 'to-unicode'>('to-chinese');
 const unicodeFormat = ref<'slash' | 'plus'>('slash');
@@ -74,6 +75,20 @@ const output = ref('');
 const error = ref('');
 const message = ref('');
 const autoConvert = ref(false);
+
+usePrefill((payload) => {
+  if (!payload.value) return;
+  if (payload.action === 'to-chinese') {
+    direction.value = 'to-chinese';
+  } else if (payload.action === 'to-unicode') {
+    direction.value = 'to-unicode';
+  }
+  input.value = payload.value;
+  handleConvert();
+  if (payload.truncated) {
+    error.value = '选中文本过长，已截断为前 200000 个字符';
+  }
+});
 
 function handleConvert() {
   error.value = '';

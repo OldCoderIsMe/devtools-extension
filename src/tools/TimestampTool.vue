@@ -44,6 +44,7 @@
     timestampToLocalString,
     dateStringToTimestamp,
   } from '@/core/time';
+  import { usePrefill } from '@/core/prefill';
   
   const timestampInput = ref('');
   const tsOutput = ref('');
@@ -52,6 +53,15 @@
   const dateInput = ref('');
   const dateOutput = ref<number | ''>('');
   const dateError = ref('');
+
+  usePrefill((payload) => {
+    if (!payload.value) return;
+    timestampInput.value = payload.value;
+    handleTsToDate();
+    if (payload.truncated) {
+      tsError.value = '选中文本过长，已截断为前 200000 个字符';
+    }
+  });
   
   function handleTsToDate() {
     tsError.value = '';

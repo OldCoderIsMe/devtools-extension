@@ -82,6 +82,7 @@
     hmacSha256,
     hmacSha512,
   } from '@/core/hash';
+  import { usePrefill } from '@/core/prefill';
   
   type Algorithm =
     | 'md5'
@@ -105,6 +106,18 @@
   const rawOutput = ref('');
   const isUpperCase = ref(false);
   const message = ref('');
+
+  usePrefill((payload) => {
+    if (!payload.value) return;
+    if (payload.action) {
+      selectedAlgorithm.value = payload.action as Algorithm;
+    }
+    input.value = payload.value;
+    handleCompute();
+    if (payload.truncated) {
+      message.value = '选中文本过长，已截断为前 200000 个字符';
+    }
+  });
   
   const needsKey = computed(() => {
     return (

@@ -80,6 +80,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { usePrefill } from '@/core/prefill';
 
 type GeneratorType = 'uuid' | 'random' | 'password';
 type Charset = 'alphanumeric' | 'lowercase' | 'uppercase' | 'letters' | 'numbers' | 'hex';
@@ -93,6 +94,16 @@ const includeNumbers = ref(true);
 const includeSymbols = ref(false);
 const output = ref('');
 const message = ref('');
+
+usePrefill((payload) => {
+  if (!payload.value) return;
+  // UUID 为只读格式，直接显示在结果区便于核对 / 复制
+  output.value = payload.value;
+  message.value = '已带入剪贴板中的 UUID';
+  if (payload.truncated) {
+    message.value = '选中文本过长，已截断为前 200000 个字符';
+  }
+});
 
 function generateUuid(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {

@@ -48,12 +48,34 @@ declare module 'qrcode' {
 declare const chrome: {
   storage: {
     local: {
-      get: (keys: string[], callback: (result: Record<string, any>) => void) => void;
-      set: (items: Record<string, any>) => void;
+      get: (
+        keys: string | string[] | null,
+        callback: (result: Record<string, any>) => void,
+      ) => void;
+      set: (items: Record<string, any>, callback?: () => void) => void;
+      remove: (keys: string | string[], callback?: () => void) => void;
     };
   };
   runtime?: {
     id?: string;
+    lastError?: { message?: string };
+    getURL?: (path: string) => string;
+    onInstalled?: {
+      addListener: (callback: () => void) => void;
+    };
   };
   devtools?: any;
+  contextMenus?: {
+    removeAll: (callback?: () => void) => void;
+    create: (properties: Record<string, any>) => void;
+    onClicked?: {
+      addListener: (callback: (info: any, tab?: any) => void) => void;
+    };
+  };
+  action?: {
+    openPopup?: () => Promise<void> | void;
+  };
+  tabs?: {
+    create: (properties: { url: string }) => Promise<any> | void;
+  };
 } | undefined;
