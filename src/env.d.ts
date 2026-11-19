@@ -55,6 +55,14 @@ declare const chrome: {
       set: (items: Record<string, any>, callback?: () => void) => void;
       remove: (keys: string | string[], callback?: () => void) => void;
     };
+    session?: {
+      get: (
+        keys: string | string[] | null,
+        callback: (result: Record<string, any>) => void,
+      ) => void;
+      set: (items: Record<string, any>, callback?: () => void) => void;
+      remove: (keys: string | string[], callback?: () => void) => void;
+    };
   };
   runtime?: {
     id?: string;
@@ -62,6 +70,28 @@ declare const chrome: {
     getURL?: (path: string) => string;
     onInstalled?: {
       addListener: (callback: () => void) => void;
+    };
+    onMessage?: {
+      addListener: (
+        callback: (message: any, sender?: any, sendResponse?: (response?: any) => void) => any,
+      ) => void;
+    };
+    sendMessage?: (message: any, callback?: (response: any) => void) => void;
+  };
+  commands?: {
+    onCommand?: {
+      addListener: (callback: (command: string) => void) => void;
+    };
+  };
+  windows?: {
+    create: (properties: Record<string, any>, callback?: (window: any) => void) => void;
+    update: (
+      windowId: number,
+      updateInfo: Record<string, any>,
+      callback?: (window: any) => void,
+    ) => void;
+    onRemoved?: {
+      addListener: (callback: (windowId: number) => void) => void;
     };
   };
   devtools?: any;

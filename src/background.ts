@@ -1,5 +1,5 @@
 /**
- * MV3 background service worker：负责右键菜单，并把选中的文本交接给 popup。
+ * MV3 background service worker：负责右键菜单与快速搜索弹窗，并把选中的文本交接给 popup。
  *
  * 该文件不引入任何运行时依赖，避免把 Vue 等代码打进 service worker。
  */
@@ -7,6 +7,13 @@ const MENU_ROOT = 'devtools-suite-root';
 const HASH_PARENT = 'devtools-hash';
 const PENDING_PREFILL_KEY = 'devtools-pending-prefill';
 const MAX_SELECTION_LENGTH = 200_000;
+
+const QUICK_SEARCH_PAGE = 'quick-search.html';
+const QUICK_SEARCH_WINDOW_KEY = 'devtools-quick-search-window';
+const QUICK_SEARCH_COMMAND = 'open-quick-search';
+const QUICK_SEARCH_MESSAGE = 'open-quick-search';
+const QUICK_SEARCH_WIDTH = 620;
+const QUICK_SEARCH_HEIGHT = 430;
 
 interface ContextMenuItem {
   id: string;
@@ -122,6 +129,129 @@ function handleMenuClick(info: any): void {
 
 const runtime = (chrome as any).runtime;
 const contextMenus = (chrome as any).contextMenus;
+
+/**
+ * 快速搜索弹窗的窗口 id 只保存在 storage.session 中：
+ * 浏览器重启后会话存储自动清空，避免用旧 id 误聚焦到其他窗口。
+ */
+function quickSearchStore(): any {
+  return (chrome as any).storage?.session;
+}
+
+function readQuickSearchWindowId(): Promise<number | undefined> {
+  return new Promise((resolve) => {
+    const store = quickSearchStore();
+    if (!store?.get) {
+      resolve(undefined);
+      return;
+    }
+    try {
+      store.get([QUICK_SEARCH_WINDOW_KEY], (result: Record<string, any>) => {
+        void (chrome as any).runtime?.lastError;
+        const id = result?.[QUICK_SEARCH_WINDOW_KEY];
+        resolve(typeof id === 'number' ? id : undefined);
+      });
+    } catch {
+      resolve(undefined);
+    }
+  });
+}
+
+function writeQuickSearchWindowId(windowId?: number): void {
+  const store = quickSearchStore();
+  if (!store) return;
+  try {
+    if (typeof windowId === 'number') {
+      store.set({ [QUICK_SEARCH_WINDOW_KEY]: windowId });
+    } else {
+      store.remove([QUICK_SEARCH_WINDOW_KEY]);
+    }
+  } catch {
+    // 存储不可用时忽略，下次直接新建窗口
+  }
+}
+
+function focusQuickSearchWindow(windowId: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const windows = (chrome as any).windows;
+    if (!windows?.update) {
+      resolve(false);
+      return;
+    }
+    try {
+      windows.update(windowId, { focused: true }, (win: any) => {
+        const error = (chrome as any).runtime?.lastError;
+        resolve(!error && !!win);
+      });
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+function createQuickSearchWindow(url: string): Promise<number | undefined> {
+  return new Promise((resolve) => {
+    const windows = (chrome as any).windows;
+    if (!windows?.create) {
+      resolve(undefined);
+      return;
+    }
+    try {
+      windows.create(
+        {
+          url,
+          type: 'popup',
+          width: QUICK_SEARCH_WIDTH,
+          height: QUICK_SEARCH_HEIGHT,
+          focused: true,
+        },
+        (win: any) => {
+          void (chrome as any).runtime?.lastError;
+          resolve(typeof win?.id === 'number' ? win.id : undefined);
+        },
+      );
+    } catch {
+      resolve(undefined);
+    }
+  });
+}
+
+/** 已打开则聚焦，否则新建独立弹窗（Spotlight 风格） */
+async function openQuickSearchWindow(): Promise<void> {
+  const url = (chrome as any).runtime?.getURL?.(QUICK_SEARCH_PAGE);
+  if (!url) return;
+
+  const existingId = await readQuickSearchWindowId();
+  if (typeof existingId === 'number' && (await focusQuickSearchWindow(existingId))) {
+    return;
+  }
+
+  const windowId = await createQuickSearchWindow(url);
+  writeQuickSearchWindowId(windowId);
+}
+
+const commands = (chrome as any).commands;
+commands?.onCommand?.addListener((command: string) => {
+  if (command === QUICK_SEARCH_COMMAND) {
+    void openQuickSearchWindow();
+  }
+});
+
+// popup 里的「快速搜索」按钮通过消息复用同一套窗口管理逻辑
+runtime?.onMessage?.addListener((message: any) => {
+  if (message?.type === QUICK_SEARCH_MESSAGE) {
+    void openQuickSearchWindow();
+  }
+});
+
+const windows = (chrome as any).windows;
+windows?.onRemoved?.addListener((windowId: number) => {
+  void readQuickSearchWindowId().then((storedId) => {
+    if (storedId === windowId) {
+      writeQuickSearchWindowId(undefined);
+    }
+  });
+});
 
 runtime?.onInstalled?.addListener(createMenus);
 contextMenus?.onClicked?.addListener(handleMenuClick);

@@ -1,5 +1,5 @@
 <template>
-  <div class="quick-search-container">
+  <div class="quick-search-container" :class="{ 'browser-env': !isElectron }">
     <div class="quick-search-window">
       <div class="quick-search-header">
         <input
@@ -82,6 +82,9 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { parseAndExecuteCommand } from '@/core/commandParser';
 import { fuzzyMatchCommands, AVAILABLE_COMMANDS, type CommandInfo } from '@/core/commands';
+
+// Electron 使用透明无边框窗口；浏览器/扩展弹窗需要自己铺底色
+const isElectron = typeof window !== 'undefined' && !!(window as any).electron;
 
 const input = ref('');
 const result = ref<{ success: boolean; output?: string; error?: string } | null>(null);
@@ -217,7 +220,10 @@ function closeWindow() {
   const electron = (window as any).electron;
   if (electron && electron.quickSearch) {
     electron.quickSearch.close();
+    return;
   }
+  // Chrome 扩展弹窗 / 浏览器标签页：直接关闭当前窗口
+  window.close();
 }
 
 // 监听 ESC 键
@@ -526,5 +532,16 @@ onUnmounted(() => {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
   margin-top: 4px;
+}
+
+/* 浏览器 / Chrome 扩展弹窗：没有 Electron 的透明无边框窗口，铺一层纯色底 */
+.quick-search-container.browser-env {
+  background: #12121f;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.quick-search-container.browser-env .quick-search-window {
+  cursor: default;
 }
 </style>

@@ -45,7 +45,7 @@ npm run electron:pack
 ## 隐私与权限
 
 - 项目工具的计算默认在本地完成；涉及外部模型或资源时，需遵循现有实现和任务授权，不要擅自扩大数据流转范围。
-- Chrome 扩展 manifest 当前只声明 `storage` 权限，用于本地数据存储。新增或扩大权限必须有明确需求，不得由文档或重构顺带引入。
+- Chrome 扩展 manifest 当前声明 `storage`、`contextMenus`、`clipboardRead` 三个权限，并通过 `commands` 声明快速搜索快捷键（`commands` 不是权限项）。新增或扩大权限必须有明确需求，不得由文档或重构顺带引入。
 - 摄像头功能必须在用户明确授权后使用。浏览器端应运行在 HTTPS 或 `localhost` 等安全上下文中；macOS/Electron 端还需遵循系统摄像头授权状态。不要绕过拒绝授权或将摄像头数据上传。
 
 ## 验证与交付

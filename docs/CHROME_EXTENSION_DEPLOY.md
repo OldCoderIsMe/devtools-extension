@@ -27,7 +27,7 @@ npm run package
 这会自动：
 1. ✅ 构建项目（`npm run build`）
 2. ✅ 生成图标（从 brand-icon.png 生成 16x16, 48x48, 128x128）
-3. ✅ 创建 ZIP 包（例如：`devtools-suite-v0.1.4.zip`，以 `package.json` 的 version 为准）
+3. ✅ 创建 ZIP 包（例如：`devtools-suite-v0.1.5.zip`，以 `package.json` 的 version 为准）
 
 ### 快速发布步骤
 
@@ -89,7 +89,7 @@ npm run package
 这会自动完成：
 1. 构建项目
 2. 生成图标
-3. 创建 ZIP 包（例如：`devtools-suite-v0.1.4.zip`，以 `package.json` 的 version 为准）
+3. 创建 ZIP 包（例如：`devtools-suite-v0.1.5.zip`，以 `package.json` 的 version 为准）
 
 ### 方法二：手动打包
 
@@ -101,12 +101,20 @@ npm run build
 cd dist
 
 # 3. 创建 ZIP（Mac/Linux）
-zip -r ../devtools-suite-v0.1.4.zip . -x "*/README.md" -x "*/.gitkeep" -x "*/.DS_Store"
+zip -r ../devtools-suite-v0.1.5.zip . -x "*/README.md" -x "*/.gitkeep" -x "*/.DS_Store"
 
 # Windows 用户可以使用图形界面压缩 dist 文件夹内的所有文件
 ```
 
 **重要**：ZIP 文件应该包含 `dist` 文件夹**内部**的文件，解压后直接看到 `manifest.json`。
+
+### 本地验证（加载 dist）
+
+1. 打开 `chrome://extensions/`，开启「开发者模式」
+2. 选择「加载已解压的扩展程序」，指向 `dist` 目录
+3. 点击扩展图标，确认侧边栏出现 🔍 按钮
+4. 按 `Ctrl+Shift+K`（macOS `⌘+Shift+K`），应打开快速搜索弹窗；输入 `md5 hello` 应直接返回结果
+5. 若快捷键与浏览器/系统冲突，在 `chrome://extensions/shortcuts` 中重新分配
 
 ## 👤 注册开发者账号
 
@@ -134,7 +142,7 @@ zip -r ../devtools-suite-v0.1.4.zip . -x "*/README.md" -x "*/.gitkeep" -x "*/.DS
 ### 步骤 2：上传 ZIP 文件
 
 1. 点击"**选择文件**"或拖拽文件
-2. 选择：`devtools-suite-v0.1.4.zip`（以实际打包生成的文件名为准）
+2. 选择：`devtools-suite-v0.1.5.zip`（以实际打包生成的文件名为准）
 3. 等待上传完成（可能需要几分钟）
 
 ### 步骤 3：验证上传
@@ -153,7 +161,7 @@ DevTools Suite
 
 **简短描述**（最多 132 字符）：
 ```
-常用开发小工具集合：URL编码、加密哈希、时间戳转换、JSON格式化、文本处理、UUID生成、正则测试、二维码生成、文本对比等。所有计算在本地完成，保护隐私安全。
+常用开发小工具集合：URL编码、加密哈希、时间戳、JSON、文本处理、UUID、正则、二维码、颜色、JWT、快速搜索等。支持选中文本右键直连、剪贴板智能识别，所有计算在本地完成，保护隐私安全。
 ```
 
 **详细描述**（最多 16,000 字符）：
@@ -429,6 +437,7 @@ devtools-extension/
 - [ ] 支持邮箱已填写
 - [ ] 定价设置为"免费"
 - [ ] 分发范围设置为"公开"
+- [ ] 已在 `dist` 上验证快速搜索快捷键（`chrome://extensions/shortcuts` 可改）
 - [ ] 所有信息已检查无误
 
 ### 步骤 2：提交审核
