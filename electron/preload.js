@@ -1,5 +1,17 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+// 文件可能在渲染页面完成挂载前就从 Finder/Dock 发送过来。
+// 先在 preload 层暂存，等 Vue 页面注册监听器后再交付，避免首个文件事件丢失。
+const markdownFileListeners = new Set();
+const pendingMarkdownFiles = [];
+ipcRenderer.on('markdown-file:open', (_event, file) => {
+  if (markdownFileListeners.size === 0) {
+    pendingMarkdownFiles.push(file);
+    return;
+  }
+  markdownFileListeners.forEach((listener) => listener(file));
+});
+
 // 暴露受保护的方法给渲染进程
 contextBridge.exposeInMainWorld('electron', {
   platform: process.platform,
@@ -23,6 +35,19 @@ contextBridge.exposeInMainWorld('electron', {
     getShortcuts: () => ipcRenderer.invoke('settings:getShortcuts'),
     updateShortcut: (key, value) => ipcRenderer.invoke('settings:updateShortcut', key, value),
     resetShortcuts: () => ipcRenderer.invoke('settings:resetShortcuts'),
+  },
+  // Markdown 文件相关 IPC（仅 Electron 环境）
+  markdown: {
+    openFile: () => ipcRenderer.invoke('markdown:openFile'),
+    saveFile: (filePath, content) => ipcRenderer.invoke('markdown:saveFile', filePath, content),
+    saveAs: (content, defaultFileName) => ipcRenderer.invoke('markdown:saveAs', content, defaultFileName),
+    onFileOpen: (callback) => {
+      markdownFileListeners.add(callback);
+      while (pendingMarkdownFiles.length > 0) {
+        callback(pendingMarkdownFiles.shift());
+      }
+      return () => markdownFileListeners.delete(callback);
+    },
   },
   // 文件移动相关 IPC（仅 Electron 环境）
   fileMove: {

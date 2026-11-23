@@ -13,12 +13,13 @@
     "electron:dev": "concurrently \"npm run dev\" \"node scripts/wait-for-vite.js\"",
     "electron:build": "ELECTRON=1 npm run build && electron-builder",
     "electron:build:mac": "ELECTRON=1 npm run build && node scripts/clean-dmg-mounts.js && sleep 2 && electron-builder --mac --x64 --publish never && node scripts/clean-dmg-mounts.js && sleep 2 && electron-builder --mac --arm64 --publish never",
-    "electron:pack": "npm run build && electron-builder --dir"
+    "electron:pack": "ELECTRON=1 npm run build && electron-builder --dir"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^0.10.32",
     "crypto-js": "^4.2.0",
     "marked": "^17.0.1",
+    "mermaid": "^11.17.2",
     "qrcode": "^1.5.3",
     "three": "^0.182.0",
     "vue": "^3.5.0"
@@ -49,6 +50,30 @@
       "icons/**/*",
       "package.json"
     ],
+    "afterPack": "electron/after-pack.js",
+    "fileAssociations": [
+      {
+        "ext": "md",
+        "name": "Markdown document",
+        "description": "Markdown document",
+        "role": "Editor",
+        "mimeType": "text/markdown"
+      },
+      {
+        "ext": "markdown",
+        "name": "Markdown document",
+        "description": "Markdown document",
+        "role": "Editor",
+        "mimeType": "text/markdown"
+      },
+      {
+        "ext": "mdown",
+        "name": "Markdown document",
+        "description": "Markdown document",
+        "role": "Editor",
+        "mimeType": "text/markdown"
+      }
+    ],
     "mac": {
       "category": "public.app-category.developer-tools",
       "target": [
@@ -68,7 +93,38 @@
         "CFBundleExecutable": "DevTools Suite",
         "LSApplicationCategoryType": "public.app-category.developer-tools",
         "NSCameraUsageDescription": "用于 Solar System 功能：读取摄像头画面进行手势识别（仅本地处理，不上传数据）。",
-        "NSMicrophoneUsageDescription": "用于媒体权限兼容（默认不采集麦克风，仅在需要时由用户授权）。"
+        "NSMicrophoneUsageDescription": "用于媒体权限兼容（默认不采集麦克风，仅在需要时由用户授权）。",
+        "UTExportedTypeDeclarations": [
+          {
+            "UTTypeIdentifier": "com.devtools.suite.markdown",
+            "UTTypeDescription": "Markdown document",
+            "UTTypeConformsTo": [
+              "public.text"
+            ],
+            "UTTypeTagSpecification": {
+              "public.filename-extension": [
+                "md",
+                "markdown",
+                "mdown"
+              ],
+              "public.mime-type": "text/markdown"
+            }
+          }
+        ],
+        "CFBundleDocumentTypes": [
+          {
+            "CFBundleTypeExtensions": [
+              "md",
+              "markdown",
+              "mdown"
+            ],
+            "CFBundleTypeName": "Markdown document",
+            "CFBundleTypeRole": "Editor",
+            "LSItemContentTypes": [
+              "com.devtools.suite.markdown"
+            ]
+          }
+        ]
       }
     },
     "dmg": {

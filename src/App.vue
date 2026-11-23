@@ -1,5 +1,11 @@
 <template>
-    <div :class="['app', { 'light-theme': isLightTheme, 'fullscreen': isFullscreen, 'electron': isElectron, 'chrome-extension': isChromeExtension }]" ref="appRef">
+    <div v-if="isMarkdownEditorWindow" class="markdown-editor-shell">
+      <MarkdownTool
+        :initial-file="pendingMarkdownFile"
+        @file-loaded="pendingMarkdownFile = null"
+      />
+    </div>
+    <div v-else :class="['app', { 'light-theme': isLightTheme, 'fullscreen': isFullscreen, 'electron': isElectron, 'chrome-extension': isChromeExtension }]" ref="appRef">
       <!-- Electron 环境：顶部可拖动区域 -->
       <div v-if="isElectron" class="electron-titlebar"></div>
 
@@ -77,7 +83,12 @@
         </aside>
     
         <main class="main">
-          <component v-if="!showDeveloperInfo && !showSettings" :is="activeToolComponent" />
+          <component
+            v-if="!showDeveloperInfo && !showSettings"
+            :is="activeToolComponent"
+            :initial-file="activeToolId === 'markdown' ? pendingMarkdownFile : undefined"
+            @file-loaded="pendingMarkdownFile = null"
+          />
           <!-- 开发者信息页面 -->
           <div v-else-if="showDeveloperInfo" class="developer-info-page">
             <div class="developer-info-card">
@@ -141,6 +152,10 @@ import {
     component: any;
   }
   
+  // 由 Electron 打开的 Markdown 文件使用独立编辑器窗口，避免落回工具首页。
+  const isMarkdownEditorWindow = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('mode') === 'markdown-editor';
+
   // 检测是否在 Electron 环境中
   const isElectron = typeof window !== 'undefined' && 
     (window as any).electron !== undefined;
@@ -208,6 +223,7 @@ import {
   const tools = ref<ToolMeta[]>([...baseTools, ...electronTools]);
   
   const activeToolId = ref<string>(tools.value[0].id);
+  const pendingMarkdownFile = ref<MarkdownFilePayload | null>(null);
   
   // 全屏管理
   const isFullscreen = ref(false);
@@ -485,8 +501,21 @@ import {
     }
   }
   
+  function handleMarkdownFileOpen(file: MarkdownFilePayload): void {
+    pendingMarkdownFile.value = file;
+    activeToolId.value = 'markdown';
+    showDeveloperInfo.value = false;
+    showSettings.value = false;
+  }
+
+  let removeMarkdownFileListener: (() => void) | undefined;
+
   onMounted(() => {
     loadTheme();
+
+    if (isElectron) {
+      removeMarkdownFileListener = window.electron?.markdown?.onFileOpen(handleMarkdownFileOpen);
+    }
 
     // 消费右键菜单 / 剪贴板入口带入的数据
     void initClipboardDetection();
@@ -577,6 +606,9 @@ import {
   });
   
   onUnmounted(() => {
+    removeMarkdownFileListener?.();
+    removeMarkdownFileListener = undefined;
+
     // 清理全屏事件监听（仅在非扩展环境中）
     if (!isExtensionDevTools) {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
