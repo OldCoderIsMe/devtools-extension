@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Menu, shell, screen, globalShortcut, ipcMain, Tray, nativeImage, dialog, crashReporter, session, systemPreferences } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const settings = require('./settings');
 const fileOperations = require('./fileOperations');
 
@@ -21,10 +22,173 @@ const isDev = process.env.NODE_ENV === 'development' ||
               !app.isPackaged;
 
 let mainWindow;
+let markdownEditorWindow = null;
 let quickSearchWindow = null;
 let countdownWidgetWindow = null;
 let tray = null;
 let isQuitting = false; // 标记是否正在退出应用
+const pendingMarkdownFiles = [];
+const pendingMarkdownEditorFiles = [];
+const markdownExtensions = new Set(['.md', '.markdown', '.mdown', '.mkdn', '.mkd']);
+
+function isMarkdownFile(filePath) {
+  return typeof filePath === 'string' && markdownExtensions.has(path.extname(filePath).toLowerCase());
+}
+
+function readMarkdownFile(filePath) {
+  if (!isMarkdownFile(filePath)) {
+    return { success: false, error: '仅支持 Markdown 文件（.md、.markdown、.mdown、.mkdn、.mkd）' };
+  }
+  try {
+    const resolvedPath = path.resolve(filePath);
+    const stats = fs.statSync(resolvedPath);
+    if (!stats.isFile()) {
+      return { success: false, error: '目标路径不是文件' };
+    }
+    return {
+      success: true,
+      file: {
+        path: resolvedPath,
+        name: path.basename(resolvedPath),
+        content: fs.readFileSync(resolvedPath, 'utf8'),
+      },
+    };
+  } catch (error) {
+    return { success: false, error: error?.message || '无法读取 Markdown 文件' };
+  }
+}
+
+function focusMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    createWindow();
+    return;
+  }
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+function dispatchMarkdownFile(filePath) {
+  const result = readMarkdownFile(filePath);
+  if (!result.success) {
+    console.error('[Electron] 打开 Markdown 文件失败:', result.error, filePath);
+    return;
+  }
+  openMarkdownEditor(result.file);
+}
+
+function queueMarkdownFile(filePath) {
+  if (!isMarkdownFile(filePath)) return;
+  const result = readMarkdownFile(filePath);
+  if (!result.success) {
+    console.error('[Electron] 队列 Markdown 文件失败:', result.error, filePath);
+    return;
+  }
+  pendingMarkdownFiles.push(result.file);
+  if (app.isReady()) flushPendingMarkdownFiles();
+}
+
+function flushPendingMarkdownFiles() {
+  while (pendingMarkdownFiles.length > 0) {
+    openMarkdownEditor(pendingMarkdownFiles.shift());
+  }
+}
+
+function sendMarkdownFileToEditor(file) {
+  if (!markdownEditorWindow || markdownEditorWindow.isDestroyed()) return false;
+  if (markdownEditorWindow.webContents.isLoadingMainFrame()) {
+    pendingMarkdownEditorFiles.push(file);
+    return true;
+  }
+  markdownEditorWindow.setTitle(`Markdown 编辑器 - ${file.name}`);
+  markdownEditorWindow.webContents.send('markdown-file:open', file);
+  return true;
+}
+
+function flushPendingMarkdownEditorFiles() {
+  if (!markdownEditorWindow || markdownEditorWindow.isDestroyed() || markdownEditorWindow.webContents.isLoadingMainFrame()) return;
+  while (pendingMarkdownEditorFiles.length > 0) {
+    markdownEditorWindow.webContents.send('markdown-file:open', pendingMarkdownEditorFiles.shift());
+  }
+}
+
+function openMarkdownEditor(file) {
+  if (markdownEditorWindow && !markdownEditorWindow.isDestroyed()) {
+    if (markdownEditorWindow.isMinimized()) markdownEditorWindow.restore();
+    markdownEditorWindow.show();
+    markdownEditorWindow.focus();
+    sendMarkdownFileToEditor(file);
+    return;
+  }
+
+  pendingMarkdownEditorFiles.push(file);
+  const windowOptions = {
+    width: 1280,
+    height: 860,
+    minWidth: 860,
+    minHeight: 620,
+    title: `Markdown 编辑器 - ${file.name}`,
+    backgroundColor: '#111827',
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      enableRemoteModule: false,
+      preload: path.join(__dirname, 'preload.js'),
+      webSecurity: true,
+    },
+    show: false,
+  };
+
+  try {
+    markdownEditorWindow = new BrowserWindow(windowOptions);
+    markdownEditorWindow.on('did-finish-load', flushPendingMarkdownEditorFiles);
+    markdownEditorWindow.once('ready-to-show', () => {
+      markdownEditorWindow.show();
+      markdownEditorWindow.focus();
+      flushPendingMarkdownEditorFiles();
+    });
+    markdownEditorWindow.on('closed', () => {
+      markdownEditorWindow = null;
+      pendingMarkdownEditorFiles.length = 0;
+    });
+
+    if (isDev) {
+      const port = process.env.VITE_PORT || process.env.PORT || 5173;
+      markdownEditorWindow.loadURL(`http://localhost:${port}/?mode=markdown-editor`).catch((error) => {
+        console.error('[Electron] Markdown 编辑器加载失败:', error);
+      });
+    } else {
+      const indexPath = path.join(__dirname, '../dist/index.html');
+      markdownEditorWindow.loadFile(indexPath, { query: { mode: 'markdown-editor' } }).catch((error) => {
+        console.error('[Electron] Markdown 编辑器加载失败:', error);
+      });
+    }
+  } catch (error) {
+    console.error('[Electron] 创建 Markdown 编辑器窗口失败:', error);
+    markdownEditorWindow = null;
+    pendingMarkdownEditorFiles.length = 0;
+  }
+}
+
+// Finder 双击、Dock 中打开文件和第二次启动应用都会走这些入口。
+app.on('open-file', (event, filePath) => {
+  event.preventDefault();
+  queueMarkdownFile(filePath);
+});
+
+const initialMarkdownFiles = process.argv.slice(1).filter(isMarkdownFile);
+initialMarkdownFiles.forEach(queueMarkdownFile);
+
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (_event, commandLine) => {
+    const filePath = commandLine.slice(1).find(isMarkdownFile);
+    if (filePath) dispatchMarkdownFile(filePath);
+    else focusMainWindow();
+  });
+}
 
 function createWindow() {
   // Electron 客户端：获取主显示器的尺寸，撑满窗口
@@ -77,6 +241,8 @@ function createWindow() {
     console.error('[Electron] 创建主窗口失败:', error);
     return;
   }
+
+  // Markdown 文件使用独立编辑器窗口，不占用主工具首页。
 
   // 加载应用
   if (isDev) {
@@ -414,6 +580,51 @@ function registerGlobalShortcuts() {
 
 // 注册 IPC 处理器
 function registerIpcHandlers() {
+  // Markdown 文件：打开、保存和另存为（仅 Electron）
+  ipcMain.handle('markdown:openFile', async (event) => {
+    const ownerWindow = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+    const result = await dialog.showOpenDialog(ownerWindow, {
+      title: '打开 Markdown 文件',
+      properties: ['openFile'],
+      filters: [
+        { name: 'Markdown', extensions: ['md', 'markdown', 'mdown', 'mkdn', 'mkd'] },
+        { name: '所有文件', extensions: ['*'] },
+      ],
+    });
+    if (result.canceled || !result.filePaths[0]) return { canceled: true };
+    return readMarkdownFile(result.filePaths[0]);
+  });
+
+  ipcMain.handle('markdown:saveFile', async (_event, filePath, content) => {
+    if (!isMarkdownFile(filePath)) {
+      return { success: false, error: '仅支持 Markdown 文件扩展名' };
+    }
+    try {
+      fs.writeFileSync(path.resolve(filePath), String(content ?? ''), 'utf8');
+      return { success: true, path: path.resolve(filePath) };
+    } catch (error) {
+      return { success: false, error: error?.message || '保存 Markdown 文件失败' };
+    }
+  });
+
+  ipcMain.handle('markdown:saveAs', async (event, content, defaultFileName = 'untitled.md') => {
+    const ownerWindow = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+    const result = await dialog.showSaveDialog(ownerWindow, {
+      title: '保存 Markdown 文件',
+      defaultPath: defaultFileName.toLowerCase().endsWith('.md') ? defaultFileName : `${defaultFileName}.md`,
+      filters: [{ name: 'Markdown', extensions: ['md'] }],
+    });
+    if (result.canceled || !result.filePath) return { canceled: true };
+    let filePath = result.filePath;
+    if (!isMarkdownFile(filePath)) filePath += '.md';
+    try {
+      fs.writeFileSync(filePath, String(content ?? ''), 'utf8');
+      return { success: true, path: path.resolve(filePath), name: path.basename(filePath) };
+    } catch (error) {
+      return { success: false, error: error?.message || '保存 Markdown 文件失败' };
+    }
+  });
+
   // 关闭快速搜索窗口
   ipcMain.handle('quick-search:close', () => {
     if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
@@ -772,6 +983,9 @@ function createTray() {
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.destroy();
         }
+        if (markdownEditorWindow && !markdownEditorWindow.isDestroyed()) {
+          markdownEditorWindow.destroy();
+        }
         if (quickSearchWindow && !quickSearchWindow.isDestroyed()) {
           quickSearchWindow.destroy();
         }
@@ -934,7 +1148,13 @@ app.whenReady().then(() => {
     console.warn('[Electron] 设置媒体权限处理失败:', e?.message || e);
   }
   
-  createWindow();
+  // 直接从 Finder/Dock 打开 Markdown 时，优先显示独立编辑器，
+  // 不再先创建并展示首页，避免用户误以为文件没有被处理。
+  if (pendingMarkdownFiles.length > 0) {
+    flushPendingMarkdownFiles();
+  } else {
+    createWindow();
+  }
   createMenu();
   createTray(); // 创建菜单栏图标
   registerIpcHandlers();
@@ -943,6 +1163,13 @@ app.whenReady().then(() => {
   registerGlobalShortcuts();
 
   app.on('activate', () => {
+    // 已经通过 Markdown 文件启动时，Dock 激活优先回到编辑器窗口。
+    if ((!mainWindow || mainWindow.isDestroyed()) && markdownEditorWindow && !markdownEditorWindow.isDestroyed()) {
+      markdownEditorWindow.show();
+      markdownEditorWindow.focus();
+      return;
+    }
+
     // 在 macOS 上，当单击 dock 图标时，显示主窗口
     if (mainWindow) {
       if (mainWindow.isDestroyed()) {

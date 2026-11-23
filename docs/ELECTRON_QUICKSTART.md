@@ -36,8 +36,14 @@ npm run electron:build:mac
 ```
 
 构建完成后，在 `release` 目录中找到：
-- `DevTools Suite-0.1.0.dmg` - macOS 安装包
-- `DevTools Suite-0.1.0-mac.zip` - 压缩包
+- `DevTools Suite-0.1.5-arm64.dmg` 或 `DevTools Suite-0.1.5.dmg` - macOS 安装包
+- `DevTools Suite-0.1.5-arm64-mac.zip` 或 `DevTools Suite-0.1.5-mac.zip` - 压缩包
+
+## 📝 Markdown 文件能力
+
+macOS 客户端支持 `.md`、`.markdown`、`.mdown`、`.mkdn`、`.mkd` 文件。通过 Finder、Dock 或命令行打开 Markdown 文件时，会直接进入独立 Markdown 编辑器，支持编辑、保存、另存为、实时预览和 Mermaid 图表预览。
+
+打包应用还会尝试内置 Quick Look Markdown 扩展，具体限制和安全提示处理方式见 [Markdown 工作台文档](./MARKDOWN_WORKBENCH.md)。
 
 ## 📦 应用图标
 

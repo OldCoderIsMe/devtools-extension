@@ -47,6 +47,14 @@
 
 **快速开始 macOS 应用**：查看 [ELECTRON_QUICKSTART.md](./docs/ELECTRON_QUICKSTART.md)
 
+Markdown 文件与 macOS Quick Look：查看 [MARKDOWN_WORKBENCH.md](./docs/MARKDOWN_WORKBENCH.md)
+
+## Markdown 与 macOS 客户端
+
+macOS 客户端支持 Markdown 独立编辑器：从 Finder、Dock 或命令行打开 `.md`、`.markdown`、`.mdown`、`.mkdn`、`.mkd` 文件时，会直接进入 Markdown 编辑器，不会先显示首页。编辑器支持实时 Markdown 预览和常见 Mermaid 图表预览。
+
+Finder 中按空格可尝试使用内置 Quick Look 预览。由于当前本地包使用 ad-hoc 签名，Quick Look 可能需要刷新缓存，正式接管需要 Apple Developer ID 签名和 notarization。安装、安全提示、默认打开方式和故障排除见 [Markdown 工作台文档](./docs/MARKDOWN_WORKBENCH.md) 与 [macOS 安装说明](./docs/INSTALL.md)。
+
 ## 功能列表
 
 | 工具 | 功能描述 |
@@ -58,7 +66,7 @@
 | 📝 **文本处理** | 文本去重（按行）、排序（升序/降序）、大小写转换（大写/小写/首字母大写/驼峰命名）、文本统计（字符数/单词数/行数/段落数） |
 | 🔤 **Unicode 转换** | Unicode 编码与中文字符互转，支持 `\uXXXX` 和 `U+XXXX` 格式，支持批量转换 |
 | 🆔 **密码/字符串/UUID生成** | UUID v4 生成、随机字符串生成（可配置字符集和长度）、随机密码生成（可配置字符类型），支持批量生成 |
-| 📝 **Markdown 处理** | Markdown 编辑和实时预览、支持编辑/分屏/预览三种视图模式、支持下载为 .md 文件（点击下载弹出文件名输入对话框）、支持复制 Markdown 和 HTML 内容 |
+| 📝 **Markdown 工作台** | Markdown 编辑、打开/保存 .md 文件、编辑/分屏/预览三种视图模式，支持 Mermaid flowchart、sequence、class、state、ER、gantt、pie、timeline、mindmap、gitGraph 等常见图表实时预览；macOS 客户端支持 Finder 文件关联与 Quick Look 预览 |
 | 🔍 **正则表达式测试** | 正则匹配测试，支持全局/忽略大小写/多行等标志，替换预览，显示匹配结果和分组 |
 | 📱 **二维码生成器** | 文本/URL 转二维码，可配置尺寸（200-500px），支持下载二维码图片 |
 | 🔄 **文本差异对比** | 按行/按字符对比，高亮显示新增/删除/未改变的内容，显示统计信息 |
@@ -167,6 +175,11 @@ devtools-extension/
 ## 版本历史
 
 ### v0.1.5
+
+- ✨ 新增独立 Markdown 编辑器窗口，支持从 Finder、Dock 和命令行直接打开 Markdown 文件。
+- 📊 支持常见 Mermaid 图表实时渲染。
+- ⚡ macOS 客户端内置 Quick Look Markdown 预览扩展。
+- 🛡️ 补充未签名本地安装包、Markdown 文件安全提示和 Quick Look 限制说明。
 
 - ⚡ Chrome 扩展新增**快速搜索弹窗**：`Ctrl+Shift+K`（macOS `⌘+Shift+K`）唤起，复用 macOS 客户端的快捷指令（哈希、Base64、URL 编解码、时间戳等），弹窗内也可通过侧边栏 🔍 打开
 - 🖱️ 新增**选中文本右键直连**：选中文本右键选择 DevTools Suite 子菜单，自动带入并执行
