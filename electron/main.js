@@ -22,7 +22,6 @@ const isDev = process.env.NODE_ENV === 'development' ||
               !app.isPackaged;
 
 let mainWindow;
-let markdownEditorWindow = null;
 let quickSearchWindow = null;
 let countdownWidgetWindow = null;
 let tray = null;
@@ -94,107 +93,49 @@ function flushPendingMarkdownFiles() {
   }
 }
 
-function sendMarkdownFileToEditor(file) {
-  if (!markdownEditorWindow || markdownEditorWindow.isDestroyed()) return false;
-  if (markdownEditorWindow.webContents.isLoadingMainFrame()) {
+function sendMarkdownFileToMainWindow(file) {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+  if (mainWindow.webContents.isLoadingMainFrame()) {
     pendingMarkdownEditorFiles.push(file);
     return true;
   }
-  markdownEditorWindow.setTitle(`Markdown 编辑器 - ${file.name}`);
-  markdownEditorWindow.webContents.send('markdown-file:open', file);
+  mainWindow.setTitle(`DevTools Suite - ${file.name}`);
+  mainWindow.webContents.send('markdown-file:open', file);
   return true;
 }
 
 function flushPendingMarkdownEditorFiles() {
-  if (!markdownEditorWindow || markdownEditorWindow.isDestroyed() || markdownEditorWindow.webContents.isLoadingMainFrame()) return;
+  if (!mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isLoadingMainFrame()) return;
   while (pendingMarkdownEditorFiles.length > 0) {
-    markdownEditorWindow.webContents.send('markdown-file:open', pendingMarkdownEditorFiles.shift());
+    mainWindow.webContents.send('markdown-file:open', pendingMarkdownEditorFiles.shift());
   }
 }
 
-function revealMarkdownEditorWindow() {
-  if (!markdownEditorWindow || markdownEditorWindow.isDestroyed()) return;
+function revealMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
 
-  if (markdownEditorWindow.isMinimized()) {
-    markdownEditorWindow.restore();
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
   }
 
-  // Finder/Dock 打开文件时，应用可能只在后台启动，或主窗口仍在前台。
-  // 显式激活应用并把 Markdown 窗口置顶，避免“应用已加载但看不到窗口”的错觉。
   if (process.platform === 'darwin') {
-    app.focus({ stealFocus: true });
+    app.focus({ steal: true });
   }
-  markdownEditorWindow.show();
-  markdownEditorWindow.moveTop();
-  markdownEditorWindow.focus();
+  mainWindow.show();
+  mainWindow.moveTop();
+  mainWindow.focus();
 }
 
 function openMarkdownEditor(file) {
-  if (markdownEditorWindow && !markdownEditorWindow.isDestroyed()) {
-    revealMarkdownEditorWindow();
-    sendMarkdownFileToEditor(file);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    revealMainWindow();
+    sendMarkdownFileToMainWindow(file);
     return;
   }
 
   pendingMarkdownEditorFiles.push(file);
-  const windowOptions = {
-    width: 1280,
-    height: 860,
-    minWidth: 860,
-    minHeight: 620,
-    title: `Markdown 编辑器 - ${file.name}`,
-    backgroundColor: '#111827',
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      enableRemoteModule: false,
-      preload: path.join(__dirname, 'preload.js'),
-      webSecurity: true,
-    },
-    show: false,
-  };
-
-  try {
-    markdownEditorWindow = new BrowserWindow(windowOptions);
-    // ready-to-show 在部分 macOS 场景下可能不会触发（例如应用从后台被 Finder 唤起）。
-    // did-finish-load 和延时兜底都主动显示窗口，确保用户能看到文件已经被打开。
-    markdownEditorWindow.on('did-finish-load', () => {
-      flushPendingMarkdownEditorFiles();
-      revealMarkdownEditorWindow();
-    });
-    markdownEditorWindow.once('ready-to-show', () => {
-      revealMarkdownEditorWindow();
-      flushPendingMarkdownEditorFiles();
-    });
-    const revealFallbackTimer = setTimeout(() => {
-      if (markdownEditorWindow && !markdownEditorWindow.isDestroyed()) {
-        revealMarkdownEditorWindow();
-        flushPendingMarkdownEditorFiles();
-      }
-    }, 1500);
-    markdownEditorWindow.on('closed', () => {
-      clearTimeout(revealFallbackTimer);
-      markdownEditorWindow = null;
-      pendingMarkdownEditorFiles.length = 0;
-    });
-
-    if (isDev) {
-      const port = process.env.VITE_PORT || process.env.PORT || 5173;
-      markdownEditorWindow.loadURL(`http://localhost:${port}/?mode=markdown-editor`).catch((error) => {
-        console.error('[Electron] Markdown 编辑器加载失败:', error);
-        revealMarkdownEditorWindow();
-      });
-    } else {
-      const indexPath = path.join(__dirname, '../dist/index.html');
-      markdownEditorWindow.loadFile(indexPath, { query: { mode: 'markdown-editor' } }).catch((error) => {
-        console.error('[Electron] Markdown 编辑器加载失败:', error);
-        revealMarkdownEditorWindow();
-      });
-    }
-  } catch (error) {
-    console.error('[Electron] 创建 Markdown 编辑器窗口失败:', error);
-    markdownEditorWindow = null;
-    pendingMarkdownEditorFiles.length = 0;
+  if (app.isReady()) {
+    createWindow();
   }
 }
 
@@ -338,6 +279,7 @@ function createWindow() {
   
   mainWindow.webContents.on('did-finish-load', () => {
     console.log('[Electron] 页面加载完成');
+    flushPendingMarkdownEditorFiles();
   });
   
   mainWindow.webContents.on('dom-ready', () => {
@@ -1176,13 +1118,11 @@ app.whenReady().then(() => {
     console.warn('[Electron] 设置媒体权限处理失败:', e?.message || e);
   }
   
-  // 直接从 Finder/Dock 打开 Markdown 时，优先显示独立编辑器，
-  // 不再先创建并展示首页，避免用户误以为文件没有被处理。
-  if (pendingMarkdownFiles.length > 0) {
-    flushPendingMarkdownFiles();
-  } else {
-    createWindow();
-  }
+  // Markdown 文件使用主窗口打开，并自动切换到 Markdown 工具。
+  // 这样用户仍能看到完整的工具列表，也能明确知道文件已经加载。
+  createWindow();
+  flushPendingMarkdownFiles();
+  flushPendingMarkdownEditorFiles();
   createMenu();
   createTray(); // 创建菜单栏图标
   registerIpcHandlers();
@@ -1191,14 +1131,7 @@ app.whenReady().then(() => {
   registerGlobalShortcuts();
 
   app.on('activate', () => {
-    // 已经通过 Markdown 文件启动时，Dock 激活优先回到编辑器窗口。
-    if ((!mainWindow || mainWindow.isDestroyed()) && markdownEditorWindow && !markdownEditorWindow.isDestroyed()) {
-      markdownEditorWindow.show();
-      markdownEditorWindow.focus();
-      return;
-    }
-
-    // 在 macOS 上，当单击 dock 图标时，显示主窗口
+    // 在 macOS 上，当单击 Dock 图标时，显示主窗口。
     if (mainWindow) {
       if (mainWindow.isDestroyed()) {
         createWindow();

@@ -1,11 +1,5 @@
 <template>
-    <div v-if="isMarkdownEditorWindow" class="markdown-editor-shell">
-      <MarkdownTool
-        :initial-file="pendingMarkdownFile"
-        @file-loaded="pendingMarkdownFile = null"
-      />
-    </div>
-    <div v-else :class="['app', { 'light-theme': isLightTheme, 'fullscreen': isFullscreen, 'electron': isElectron, 'chrome-extension': isChromeExtension }]" ref="appRef">
+    <div :class="['app', { 'light-theme': isLightTheme, 'fullscreen': isFullscreen, 'electron': isElectron, 'chrome-extension': isChromeExtension }]" ref="appRef">
       <!-- Electron 环境：顶部可拖动区域 -->
       <div v-if="isElectron" class="electron-titlebar"></div>
 
@@ -152,10 +146,6 @@ import {
     component: any;
   }
   
-  // 由 Electron 打开的 Markdown 文件使用独立编辑器窗口，避免落回工具首页。
-  const isMarkdownEditorWindow = typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('mode') === 'markdown-editor';
-
   // 检测是否在 Electron 环境中
   const isElectron = typeof window !== 'undefined' && 
     (window as any).electron !== undefined;
