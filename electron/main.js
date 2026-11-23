@@ -96,7 +96,9 @@ function flushPendingMarkdownFiles() {
 
 function sendMarkdownFileToMainWindow(file) {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
-  if (!mainWindowReady || mainWindow.webContents.isLoadingMainFrame()) {
+  // did-finish-load 触发时 Chromium 仍可能短暂报告 loading=true，
+  // 这里以我们维护的 ready 状态为准，避免文件永远留在队列中。
+  if (!mainWindowReady) {
     pendingMarkdownEditorFiles.push(file);
     return true;
   }
@@ -106,7 +108,7 @@ function sendMarkdownFileToMainWindow(file) {
 }
 
 function flushPendingMarkdownEditorFiles() {
-  if (!mainWindow || mainWindow.isDestroyed() || !mainWindowReady || mainWindow.webContents.isLoadingMainFrame()) return;
+  if (!mainWindow || mainWindow.isDestroyed() || !mainWindowReady) return;
   while (pendingMarkdownEditorFiles.length > 0) {
     sendMarkdownFileToMainWindow(pendingMarkdownEditorFiles.shift());
   }
