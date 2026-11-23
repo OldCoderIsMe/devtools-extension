@@ -22,6 +22,7 @@ const isDev = process.env.NODE_ENV === 'development' ||
               !app.isPackaged;
 
 let mainWindow;
+let mainWindowReady = false;
 let quickSearchWindow = null;
 let countdownWidgetWindow = null;
 let tray = null;
@@ -95,7 +96,7 @@ function flushPendingMarkdownFiles() {
 
 function sendMarkdownFileToMainWindow(file) {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
-  if (mainWindow.webContents.isLoadingMainFrame()) {
+  if (!mainWindowReady || mainWindow.webContents.isLoadingMainFrame()) {
     pendingMarkdownEditorFiles.push(file);
     return true;
   }
@@ -105,9 +106,9 @@ function sendMarkdownFileToMainWindow(file) {
 }
 
 function flushPendingMarkdownEditorFiles() {
-  if (!mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isLoadingMainFrame()) return;
+  if (!mainWindow || mainWindow.isDestroyed() || !mainWindowReady || mainWindow.webContents.isLoadingMainFrame()) return;
   while (pendingMarkdownEditorFiles.length > 0) {
-    mainWindow.webContents.send('markdown-file:open', pendingMarkdownEditorFiles.shift());
+    sendMarkdownFileToMainWindow(pendingMarkdownEditorFiles.shift());
   }
 }
 
@@ -160,6 +161,8 @@ if (!hasSingleInstanceLock) {
 }
 
 function createWindow() {
+  mainWindowReady = false;
+
   // Electron 客户端：获取主显示器的尺寸，撑满窗口
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width, height } = primaryDisplay.workAreaSize;
@@ -277,7 +280,12 @@ function createWindow() {
     }
   });
   
+  mainWindow.webContents.on('did-start-loading', () => {
+    mainWindowReady = false;
+  });
+
   mainWindow.webContents.on('did-finish-load', () => {
+    mainWindowReady = true;
     console.log('[Electron] 页面加载完成');
     flushPendingMarkdownEditorFiles();
   });
@@ -313,6 +321,7 @@ function createWindow() {
     if (isQuitting) {
       // 清理引用，允许窗口关闭
       mainWindow = null;
+      mainWindowReady = false;
       return;
     }
     
@@ -323,12 +332,14 @@ function createWindow() {
     } else {
       // 其他平台: 真正关闭
       mainWindow = null;
+      mainWindowReady = false;
     }
   });
 
   // 窗口被销毁时
   mainWindow.on('closed', () => {
     mainWindow = null;
+    mainWindowReady = false;
   });
 
   // 处理外部链接
