@@ -112,11 +112,26 @@ function flushPendingMarkdownEditorFiles() {
   }
 }
 
+function revealMarkdownEditorWindow() {
+  if (!markdownEditorWindow || markdownEditorWindow.isDestroyed()) return;
+
+  if (markdownEditorWindow.isMinimized()) {
+    markdownEditorWindow.restore();
+  }
+
+  // Finder/Dock 打开文件时，应用可能只在后台启动，或主窗口仍在前台。
+  // 显式激活应用并把 Markdown 窗口置顶，避免“应用已加载但看不到窗口”的错觉。
+  if (process.platform === 'darwin') {
+    app.focus({ stealFocus: true });
+  }
+  markdownEditorWindow.show();
+  markdownEditorWindow.moveTop();
+  markdownEditorWindow.focus();
+}
+
 function openMarkdownEditor(file) {
   if (markdownEditorWindow && !markdownEditorWindow.isDestroyed()) {
-    if (markdownEditorWindow.isMinimized()) markdownEditorWindow.restore();
-    markdownEditorWindow.show();
-    markdownEditorWindow.focus();
+    revealMarkdownEditorWindow();
     sendMarkdownFileToEditor(file);
     return;
   }
@@ -141,13 +156,24 @@ function openMarkdownEditor(file) {
 
   try {
     markdownEditorWindow = new BrowserWindow(windowOptions);
-    markdownEditorWindow.on('did-finish-load', flushPendingMarkdownEditorFiles);
+    // ready-to-show 在部分 macOS 场景下可能不会触发（例如应用从后台被 Finder 唤起）。
+    // did-finish-load 和延时兜底都主动显示窗口，确保用户能看到文件已经被打开。
+    markdownEditorWindow.on('did-finish-load', () => {
+      flushPendingMarkdownEditorFiles();
+      revealMarkdownEditorWindow();
+    });
     markdownEditorWindow.once('ready-to-show', () => {
-      markdownEditorWindow.show();
-      markdownEditorWindow.focus();
+      revealMarkdownEditorWindow();
       flushPendingMarkdownEditorFiles();
     });
+    const revealFallbackTimer = setTimeout(() => {
+      if (markdownEditorWindow && !markdownEditorWindow.isDestroyed()) {
+        revealMarkdownEditorWindow();
+        flushPendingMarkdownEditorFiles();
+      }
+    }, 1500);
     markdownEditorWindow.on('closed', () => {
+      clearTimeout(revealFallbackTimer);
       markdownEditorWindow = null;
       pendingMarkdownEditorFiles.length = 0;
     });
@@ -156,11 +182,13 @@ function openMarkdownEditor(file) {
       const port = process.env.VITE_PORT || process.env.PORT || 5173;
       markdownEditorWindow.loadURL(`http://localhost:${port}/?mode=markdown-editor`).catch((error) => {
         console.error('[Electron] Markdown 编辑器加载失败:', error);
+        revealMarkdownEditorWindow();
       });
     } else {
       const indexPath = path.join(__dirname, '../dist/index.html');
       markdownEditorWindow.loadFile(indexPath, { query: { mode: 'markdown-editor' } }).catch((error) => {
         console.error('[Electron] Markdown 编辑器加载失败:', error);
+        revealMarkdownEditorWindow();
       });
     }
   } catch (error) {
